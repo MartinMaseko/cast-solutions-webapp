@@ -30,7 +30,10 @@
     flex-direction: column;
 }
 
-.form-container input[type="text"] {
+.form-container input[type="text"],
+.form-container input[type="number"],
+.form-container textarea,
+.form-container select {
     border: none;
     border-radius: 5px;
     margin-top: 10px;
@@ -39,6 +42,11 @@
     color: whitesmoke;
     font-size: 16px;
     max-width: 400px;
+    resize: none;
+}
+
+.form-container textarea {
+    height: 200px;
 }
 
 .form-container input[type="text"]:focus {

@@ -8,11 +8,29 @@ export default function FormPage({ onSubmit }) {
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
+    dateOfBirth: "",
+    age: "",
+    ethnicity: "",
     contact: "",
     socialMedia: "",
-    video: null,
-    images: [null, null, null], // Array to store three image files
-  });
+    actorNumber: "",
+    agency: "",
+    agencyEmail: "",
+    height: "",
+    tshirtSize: "",
+    waistSize: "",
+    pantsSize: "",
+    dressSize: "",
+    shoeSize: "",
+    workHistory: "", // New field for work history
+    workVisa: "", // New field for valid work visa
+    criminalRecord: "", // New field for criminal record
+    driversLicense: "", // New field for valid driver's license
+    availability: "", // New field for availability
+    video: null, // For video file
+    images: [null, null, null], // Array to store three image files (Head Shot, Hands Shot, Long Shot)
+    date: new Date().toLocaleDateString(), // Current date
+});
 
   const [showThankYou, setShowThankYou] = useState(false); // State to show thank you message
 
@@ -68,10 +86,28 @@ export default function FormPage({ onSubmit }) {
       await push(submissionsRef, {
         name: formData.name,
         surname: formData.surname,
+        dateOfBirth: formData.dateOfBirth,
+        age: formData.age,
+        ethnicity: formData.ethnicity,
         contact: formData.contact,
         socialMedia: formData.socialMedia,
+        actorNumber: formData.actorNumber,
+        agency: formData.agency,
+        agencyEmail: formData.agencyEmail,
+        height: formData.height,
+        tshirtSize: formData.tshirtSize,
+        waistSize: formData.waistSize,
+        pantsSize: formData.pantsSize,
+        dressSize: formData.dressSize,
+        shoeSize: formData.shoeSize,
+        workHistory: formData.workHistory,
+        workVisa: formData.workVisa,
+        criminalRecord: formData.criminalRecord,
+        driversLicense: formData.driversLicense,
+        availability: formData.availability,
         images: uploadedFiles.images,
         video: uploadedFiles.video,
+        date: formData.date, // Current date
       });
   
       // Reset form data
@@ -117,6 +153,36 @@ export default function FormPage({ onSubmit }) {
           />
         </h4>
         <h4>
+          Date of Birth:
+          <input
+            type="text"
+            name="dateOfBirth"
+            value={formData.dateOfBirth}
+            onChange={handleChange}
+            required
+          />
+        </h4>
+        <h4>
+          Age:
+          <input
+            type="number"
+            name="age"
+            value={formData.age}
+            onChange={handleChange}
+            required
+          />
+        </h4>
+        <h4>
+          Ethnicity:
+          <input
+            type="text"
+            name="ethnicity"
+            value={formData.ethnicity}
+            onChange={handleChange}
+            required
+          />
+        </h4>
+        <h4>
           Contact Details:
           <input
             type="text"
@@ -127,13 +193,156 @@ export default function FormPage({ onSubmit }) {
           />
         </h4>
         <h4>
-          Social Media Link:
+          Social Media:
           <input
             type="text"
             name="socialMedia"
             value={formData.socialMedia}
             onChange={handleChange}
           />
+        </h4>
+        <h4>
+          Actor Number:
+          <input
+            type="number"
+            name="actorNumber"
+            value={formData.actorNumber}
+            onChange={handleChange}
+            required
+          />
+        </h4>
+        <h4>
+          Agency:
+          <input
+            type="text"
+            name="agency"
+            value={formData.agency}
+            onChange={handleChange}
+          />
+        </h4>
+        <h4>
+          Agency Email:
+          <input
+            type="text"
+            name="agencyEmail"
+            value={formData.agencyEmail}
+            onChange={handleChange}
+          />
+        </h4>
+        <h4>
+          Height:
+          <input
+            type="number"
+            name="height"
+            value={formData.height}
+            onChange={handleChange}
+          />
+        </h4>
+        <h4>
+          T-shirt Size:
+          <input
+            type="text"
+            name="tshirtSize"
+            value={formData.tshirtSize}
+            onChange={handleChange}
+          />
+        </h4>
+        <h4>
+          Waist Size:
+          <input
+            type="number"
+            name="waistSize"
+            value={formData.waistSize}
+            onChange={handleChange}
+          />
+        </h4>
+        <h4>
+          Pants Size:
+          <input
+            type="number"
+            name="pantsSize"
+            value={formData.pantsSize}
+            onChange={handleChange}
+          />
+        </h4>
+        <h4>
+          Dress Size:
+          <input
+            type="number"
+            name="dressSize"
+            value={formData.dressSize}
+            onChange={handleChange}
+          />
+        </h4>
+        <h4>
+          Shoe Size:
+          <input
+            type="number"
+            name="shoeSize"
+            value={formData.shoeSize}
+            onChange={handleChange}
+          />
+        </h4>
+        <h4>
+          What work have you done in the last 5 years?
+          <textarea
+            name="workHistory"
+            value={formData.workHistory}
+            onChange={handleChange}
+            required
+          />
+        </h4>
+        <h4>
+          If not South African, do you have a valid work visa?
+          <select
+            name="workVisa"
+            value={formData.workVisa}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </h4>
+        <h4>
+          Do you have a criminal record?
+          <select
+            name="criminalRecord"
+            value={formData.criminalRecord}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </h4>
+        <h4>
+          Do you have a valid driver's license?
+          <select
+            name="driversLicense"
+            value={formData.driversLicense}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </h4>
+        <h4>
+          Are you available for shoot dates?
+          <select
+            name="availability"
+            value={formData.availability}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
         </h4>
         <h4>
           Head Shot
