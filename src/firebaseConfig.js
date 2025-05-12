@@ -4,6 +4,7 @@ import { getDatabase } from "firebase/database";
 const firebaseConfig = {
   apiKey: "AIzaSyC7YxMv3YSTCB6-0qKGvifK2cN_OYLuPxw",
   authDomain: "cast-solutions.firebaseapp.com",
+  databaseURL: "https://cast-solutions-default-rtdb.firebaseio.com/",
   projectId: "cast-solutions",
   storageBucket: "cast-solutions.appspot.com",
   messagingSenderId: "373171539609",

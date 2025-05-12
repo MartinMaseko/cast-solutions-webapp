@@ -1,42 +1,201 @@
-import React, { useState, useEffect } from "react";
-import Slider from "react-slick"; // Import the slider component
-import { ref, onValue } from "firebase/database";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Slider from "react-slick"; 
+import { ref, onValue, set, get, serverTimestamp } from "firebase/database";
 import { database } from "../firebaseConfig";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import logo from "./assets/logo.png";
+import banner from "./assets/castsolutions-banner.png"
+const emptyStarIcon = "https://img.icons8.com/ios/35/c52727/star--v1.png";
+const filledStarIcon = "https://img.icons8.com/material-sharp/35/c52727/filled-star.png";
 
-export default function DetailsPage({ clearSubmissions }) {
+export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const [submissions, setSubmissions] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [selectedDetail, setSelectedDetail] = useState(null);
+  const [newListName, setNewListName] = useState("");
+  const [expandedList, setExpandedList] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [genderFilter, setGenderFilter] = useState('all');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
+  // Fetch lists from Firebase
   useEffect(() => {
-    const submissionsRef = ref(database, "submissions");
-    const unsubscribe = onValue(submissionsRef, (snapshot) => {
+    const listsRef = ref(database, "lists");
+    const unsubscribe = onValue(listsRef, (snapshot) => {
       const data = snapshot.val();
-      const submissionsArray = data
-        ? Object.entries(data).map(([id, value]) => ({ id, ...value }))
-        : [];
-      setSubmissions(submissionsArray);
+      const listsArray = data ? Object.keys(data) : [];
+      console.log("Fetched lists: CastHome.jsx", listsArray); // Debugging
     });
 
     return () => unsubscribe();
   }, []);
 
-  const toggleFavorite = (index) => {
-    if (favorites.includes(index)) {
-      setFavorites(favorites.filter((fav) => fav !== index));
-    } else {
-      setFavorites([...favorites, index]);
+  // Fetch submissions for the expanded list
+  useEffect(() => {
+    if (expandedList) {
+      const submissionsRef = ref(database, `lists/${expandedList}/submissions`);
+      const unsubscribe = onValue(submissionsRef, (snapshot) => {
+        const data = snapshot.val();
+        const submissionsArray = data
+          ? Object.entries(data).map(([id, value]) => ({ id, ...value }))
+          : [];
+        setSubmissions(submissionsArray);
+      });
+
+      return () => unsubscribe();
     }
+  }, [expandedList]);
+
+  const handleCreateList = async () => {
+    if (newListName.trim() === "") {
+      alert("List name cannot be empty.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const listsRef = ref(database, `lists/${newListName}`);
+      
+      // First check if list already exists
+      const snapshot = await get(listsRef);
+      if (snapshot.exists()) {
+        alert("A list with this name already exists.");
+        return;
+      }
+
+      // Create the list in Firebase
+      await set(listsRef, { 
+        submissions: {},
+        createdAt: serverTimestamp()
+      });
+
+      // Verify the write was successful
+      const verifySnapshot = await get(listsRef);
+      if (!verifySnapshot.exists()) {
+        throw new Error("Failed to verify list creation");
+      }
+      
+      setNewListName("");
+
+    } catch (error) {
+      console.error("Error creating list in Firebase:", error);
+      alert("Failed to create list. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExpandList = (listName) => {
+    setExpandedList(expandedList === listName ? null : listName); // Toggle list expansion
+    setSelectedDetail(null); // Reset selected detail when switching lists
   };
 
   const handleViewDetail = (index) => {
     setSelectedDetail(submissions[index]);
+      document.querySelector('.audition-list').scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  const handleDeleteSubmission = async (submissionId) => {
+    if (!expandedList || !submissionId) return;
+    
+    if (window.confirm('Are you sure you want to delete this submission?')) {
+      try {
+        const submissionRef = ref(database, `lists/${expandedList}/submissions/${submissionId}`);
+        await set(submissionRef, null);
+        console.log('Submission deleted successfully');
+      } catch (error) {
+        console.error('Error deleting submission:', error);
+        alert('Failed to delete submission. Please try again.');
+      }
+    }
   };
 
   const handleBackToList = () => {
     setSelectedDetail(null);
+  };
+
+  const toggleFavorite = (id) => {
+    if (favorites.includes(id)) {
+      setFavorites(favorites.filter((favId) => favId !== id));
+    } else {
+      setFavorites([...favorites, id]);
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: "Submission Details",
+          text: `Check out this submission: ${selectedDetail.name} ${selectedDetail.surname}`,
+          url: window.location.href,
+        })
+        .catch((error) => console.error("Error sharing:", error));
+    } else {
+      alert("Sharing is not supported on this browser.");
+    }
+  };
+
+  const getFilteredSubmissions = () => {
+    return submissions.filter(submission => {
+      const submissionGender = submission.gender ? submission.gender.toLowerCase() : '';
+      const filterGenderLower = genderFilter.toLowerCase();
+      const matchesGender = genderFilter === 'all' || submissionGender === filterGenderLower;
+      const matchesFavorites = !showFavoritesOnly || favorites.includes(submission.id);
+      return matchesGender && matchesFavorites;
+    });
+  };
+
+  const getPaginatedSubmissions = () => {
+    const filtered = getFilteredSubmissions();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return {
+      submissions: filtered.slice(startIndex, endIndex),
+      totalPages: Math.ceil(filtered.length / itemsPerPage)
+    };
+  };
+
+  const menuStyles = {
+    container: {
+      position: 'absolute',
+      top: '20px',
+      right: '20px',
+      zIndex: 1000,
+    },
+    dropdownMenu: {
+      position: 'absolute',
+      top: '40px',
+      right: '0',
+      backgroundColor: '#2A2B38',
+      borderRadius: '5px',
+      padding: '10px',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+      display: isMenuOpen ? 'block' : 'none',
+    },
+    menuItem: {
+      color: 'whitesmoke',
+      padding: '8px 15px',
+      cursor: 'pointer',
+      display: 'block',
+      textDecoration: 'none',
+      whiteSpace: 'nowrap',
+      transition: 'all 0.3s ease',
+      fontSize: '22px',
+    },
+    subMenu: {
+      paddingLeft: '15px',
+      borderLeft: '2px solid #C52727',
+    }
   };
 
   // Slider settings
@@ -46,143 +205,369 @@ export default function DetailsPage({ clearSubmissions }) {
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    arrows: true,
+    arrows: false,
   };
 
   return (
     <div className="details-page">
-      {selectedDetail ? (
-        // Render the selected detail
-        <div>
-          <p><strong>Name:</strong> {selectedDetail.name}</p>
-          <p><strong>Surname:</strong> {selectedDetail.surname}</p>
-          <p><strong>Date of Birth:</strong> {selectedDetail.dateOfBirth}</p>
-          <p><strong>Age:</strong> {selectedDetail.age}</p>
-          <p><strong>Ethnicity:</strong> {selectedDetail.ethnicity}</p>
-          <p><strong>Contact:</strong> {selectedDetail.contact}</p>
-          <p><strong>Social Media:</strong> {selectedDetail.socialMedia}</p>
-          <p><strong>Actor Number:</strong> {selectedDetail.actorNumber}</p>
-          <p><strong>Agency:</strong> {selectedDetail.agency}</p>
-          <p><strong>Agency Email:</strong> {selectedDetail.agencyEmail}</p>
-          <p><strong>Height:</strong> {selectedDetail.height}</p>
-          <p><strong>T-shirt Size:</strong> {selectedDetail.tshirtSize}</p>
-          <p><strong>Waist Size:</strong> {selectedDetail.waistSize}</p>
-          <p><strong>Pants Size:</strong> {selectedDetail.pantsSize}</p>
-          <p><strong>Dress Size:</strong> {selectedDetail.dressSize}</p>
-          <p><strong>Shoe Size:</strong> {selectedDetail.shoeSize}</p>
-          <p><strong>Work History:</strong> {selectedDetail.workHistory}</p>
-          <p><strong>Valid Work Visa:</strong> {selectedDetail.workVisa}</p>
-          <p><strong>Criminal Record:</strong> {selectedDetail.criminalRecord}</p>
-          <p><strong>Driver's License:</strong> {selectedDetail.driversLicense}</p>
-          <p><strong>Availability:</strong> {selectedDetail.availability}</p>
-
-          {/* Image Slider */}
-          {selectedDetail.images && selectedDetail.images.length > 0 && (
-            <Slider {...sliderSettings}>
-              {selectedDetail.images.map(
-                (imageUrl, index) =>
-                  imageUrl && (
-                    <div key={index}>
-                      <img
-                        src={`http://localhost:5000${imageUrl}`} // Use the local server URL
-                        alt={`Uploaded ${index}`}
-                        style={{ width: "100%", height: "auto", borderRadius: "10px" }}
-                      />
-                    </div>
-                  )
-              )}
-            </Slider>
-          )}
-
-          {/* Video */}
-          {selectedDetail.video && (
-            <div style={{ marginTop: "20px" }}>
-              <h4>Video:</h4>
-              <video
-                src={`http://localhost:5000${selectedDetail.video}`} // Use the local server URL
-                controls
-                style={{ width: "100%", borderRadius: "10px" }}
-              />
+      <nav>
+        <img src={logo} alt="Logo" className="Homelogo" />
+        <div style={menuStyles.container}>
+          <img
+          className="menu-icon"
+            width="35"
+            height="35"
+            src="https://img.icons8.com/material-outlined/35/F5F5F5/menu--v1.png"
+            alt="menu"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            style={{ cursor: 'pointer' }}
+          />
+          <div style={menuStyles.dropdownMenu}>
+            <div 
+              style={menuStyles.menuItem}
+              onClick={() => navigate('/castform')}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#1E1F28'}
+              onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
+            >
+              Submit Audition
             </div>
-          )}
-
-          <button onClick={handleBackToList} style={{ marginTop: "20px" }}>
-            Back to List
-          </button>
-          <button onClick={() => toggleFavorite(selectedDetail.id)} style={{ marginLeft: "10px" }}>
-            {favorites.includes(selectedDetail.id) ? "Remove from Favorites" : "Add to Favorites"}
-          </button>
+            <div style={menuStyles.menuItem}>
+              Audition Lists
+              <div style={menuStyles.subMenu}>
+                {lists.map((list, index) => (
+                  <div
+                    key={index}
+                    style={menuStyles.menuItem}
+                    onClick={() => {
+                      handleExpandList(list);
+                      setIsMenuOpen(false);
+                    }}
+                    onMouseOver={(e) => e.target.style.backgroundColor = '#1E1F28'}
+                    onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    {list}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-      ) : (
-        // Render the full list of submissions with images and videos
-        <div>
-          {submissions.map((submission, index) => (
-            <div key={submission.id}>
-              <p><strong>Name:</strong> {submission.name}</p>
-              <p><strong>Surname:</strong> {submission.surname}</p>
-              <p><strong>Date of Birth:</strong> {submission.dateOfBirth}</p>
-              <p><strong>Age:</strong> {submission.age}</p>
-              <p><strong>Ethnicity:</strong> {submission.ethnicity}</p>
-              <p><strong>Contact:</strong> {submission.contact}</p>
-              <p><strong>Social Media:</strong> {submission.socialMedia}</p>
-              <p><strong>Actor Number:</strong> {submission.actorNumber}</p>
-              <p><strong>Agency:</strong> {submission.agency}</p>
-              <p><strong>Agency Email:</strong> {submission.agencyEmail}</p>
-              <p><strong>Height:</strong> {submission.height}</p>
-              <p><strong>T-shirt Size:</strong> {submission.tshirtSize}</p>
-              <p><strong>Waist Size:</strong> {submission.waistSize}</p>
-              <p><strong>Pants Size:</strong> {submission.pantsSize}</p>
-              <p><strong>Dress Size:</strong> {submission.dressSize}</p>
-              <p><strong>Shoe Size:</strong> {submission.shoeSize}</p>
-              <p><strong>Work History:</strong> {submission.workHistory}</p>
-              <p><strong>Valid Work Visa:</strong> {submission.workVisa}</p>
-              <p><strong>Criminal Record:</strong> {submission.criminalRecord}</p>
-              <p><strong>Driver's License:</strong> {submission.driversLicense}</p>
-              <p><strong>Availability:</strong> {submission.availability}</p>
+      </nav>
 
-              {/* Image Slider */}
-              {submission.images && submission.images.length > 0 && (
-                <Slider {...sliderSettings}>
-                  {submission.images.map(
-                    (imageUrl, idx) =>
-                      imageUrl && (
-                        <div key={idx}>
-                          <img
-                            src={`http://localhost:5000${imageUrl}`} // Use the local server URL
-                            alt={`Uploaded ${idx}`}
-                            style={{ width: "100%", height: "auto", borderRadius: "10px" }}
-                          />
-                        </div>
-                      )
-                  )}
-                </Slider>
-              )}
+      {/* List Management */}
+      <div className="list-management">
+        <h3>Create a Audition</h3>
+        <input
+          type="text"
+          value={newListName}
+          onChange={(e) => setNewListName(e.target.value)}
+          placeholder="Enter audition name"
+          className="audition-input"
+        />
+        <button 
+          onClick={handleCreateList} 
+          disabled={isLoading}
+          className="createAudition-button"
+        >
+          {isLoading ? "Creating..." : "Create Audition"}
+        </button>
+      </div>
 
-              {/* Video */}
-              {submission.video && (
-                <div style={{ marginTop: "20px" }}>
-                  <h4>Video:</h4>
-                  <video
-                    src={`http://localhost:5000${submission.video}`} // Use the local server URL
-                    controls
-                    style={{ width: "100%", borderRadius: "10px" }}
-                  />
+      {/* Render Lists */}
+      <div className="main-content">
+        <img src={banner} alt="Banner" className="banner" />
+          <div className="audition-list">
+            <h3>Auditions</h3>
+            {lists.map((list, index) => (
+              <div key={index} style={{ marginBottom: "10px" }}>
+                <div
+                  onClick={() => handleExpandList(list)}
+                  className={`audition-container ${expandedList === list ? 'expanded' : ''}`}
+                >
+                  {list}
                 </div>
-              )}
+                {expandedList === list && (
+                  <div>
+                    {selectedDetail ? (
+                      // Render the selected detail
+                      <div className="selected-detial">
+                        <p>
+                          <strong>Name:</strong> {selectedDetail.name}
+                        </p>
+                        <p>
+                          <strong>Surname:</strong> {selectedDetail.surname}
+                        </p>
+                        <p>
+                          <strong>Date of Birth:</strong> {selectedDetail.dateOfBirth}
+                        </p>
+                        <p>
+                          <strong>Gender:</strong> {selectedDetail.gender}
+                        </p>
+                        <p>
+                          <strong>Age:</strong> {selectedDetail.age}
+                        </p>
+                        <p>
+                          <strong>Ethnicity:</strong> {selectedDetail.ethnicity}
+                        </p>
+                        <p>
+                          <strong>Contact:</strong> {selectedDetail.contact}
+                        </p>
+                        <p>
+                          <strong>Social Media:</strong>{' '}
+                          {selectedDetail.socialMedia ? (
+                            <a 
+                              href={selectedDetail.socialMedia.startsWith('http') ? 
+                                selectedDetail.socialMedia : 
+                                `https://${selectedDetail.socialMedia}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                color: '#C52727',
+                                textDecoration: 'none'
+                              }}
+                              onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                              onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                            >
+                              {selectedDetail.socialMedia}
+                            </a>
+                          ) : (
+                            'Not provided'
+                          )}
+                        </p>
+                        <p>
+                          <strong>Actor Number:</strong> {selectedDetail.actorNumber}
+                        </p>
+                        <p>
+                          <strong>Agency:</strong> {selectedDetail.agency}
+                        </p>
+                        <p>
+                          <strong>Agency Email:</strong> {selectedDetail.agencyEmail}
+                        </p>
+                        <p>
+                          <strong>Height:</strong> {selectedDetail.height}
+                        </p>
+                        <p>
+                          <strong>T-shirt Size:</strong> {selectedDetail.tshirtSize}
+                        </p>
+                        <p>
+                          <strong>Waist Size:</strong> {selectedDetail.waistSize}
+                        </p>
+                        <p>
+                          <strong>Pants Size:</strong> {selectedDetail.pantsSize}
+                        </p>
+                        <p>
+                          <strong>Dress Size:</strong> {selectedDetail.dressSize}
+                        </p>
+                        <p>
+                          <strong>Shoe Size:</strong> {selectedDetail.shoeSize}
+                        </p>
+                        <p>
+                          <strong>Work History:</strong> {selectedDetail.workHistory}
+                        </p>
+                        <p>
+                          <strong>Valid Work Visa:</strong> {selectedDetail.workVisa}
+                        </p>
+                        <p>
+                          <strong>Criminal Record:</strong> {selectedDetail.criminalRecord}
+                        </p>
+                        <p>
+                          <strong>Driver's License:</strong> {selectedDetail.driversLicense}
+                        </p>
+                        <p>
+                          <strong>Availability:</strong> {selectedDetail.availability}
+                        </p>
 
-              <button onClick={() => toggleFavorite(index)}>
-                {favorites.includes(index) ? "Remove from Favorites" : "Add to Favorites"}
-              </button>
-              <button onClick={() => handleViewDetail(index)} style={{ marginLeft: "10px" }}>
-                View Details
-              </button>
-            </div>
-          ))}
-          <button onClick={clearSubmissions} style={{ marginTop: "20px" }}>
-            Clear All Submissions
-          </button>
+                        {/* Image Slider */}
+                        {selectedDetail.images && selectedDetail.images.length > 0 && (
+                          <Slider {...sliderSettings}>
+                            {selectedDetail.images.map(
+                              (imageUrl, index) =>
+                                imageUrl && (
+                                  <div key={index}>
+                                    <img
+                                      src={`http://localhost:5000${imageUrl}`}
+                                      alt={`Uploaded ${index}`}
+                                      style={{
+                                        width: "100%",
+                                        height: "auto",
+                                        borderRadius: "10px",
+                                      }}
+                                    />
+                                  </div>
+                                )
+                            )}
+                          </Slider>
+                        )}
+
+                        {/* Video */}
+                        {selectedDetail.video && (
+                          <div style={{ marginTop: "20px" }}>
+                            <h4>Video:</h4>
+                            <video
+                              src={`http://localhost:5000${selectedDetail.video}`}
+                              controls
+                              style={{ width: "100%", borderRadius: "10px" }}
+                            />
+                          </div>
+                        )}
+
+                        <button onClick={handleBackToList} style={{ marginTop: "20px" }}>
+                          Back to List
+                        </button>
+                        <button onClick={handleShare} style={{ marginLeft: "10px" }}>
+                          Share
+                        </button>
+                      </div>
+                    ) : (
+                      // Render the full list of submissions with only name, surname, images, and videos
+                      <div>
+                        <div className="filters-container">
+                          <div className="filter-group">
+                            <label>Gender: </label>
+                            <select 
+                              value={genderFilter} 
+                              onChange={(e) => setGenderFilter(e.target.value)}
+                              className="filter-select"
+                            >
+                              <option value="all">All</option>
+                              <option value="Male">Male</option>
+                              <option value="Female">Female</option>
+                            </select>
+                          </div>
+                          
+                          <div className="filter-group">
+                            <label>
+                              <input
+                                type="checkbox"
+                                checked={showFavoritesOnly}
+                                onChange={(e) => setShowFavoritesOnly(e.target.checked)}
+                              />
+                              Show Favorites Only
+                            </label>
+                          </div>
+                        </div>
+
+                        {getFilteredSubmissions().map((submission, index) => (
+                          <div
+                            key={submission.id}
+                            className="submission-item"
+                          >
+                            <p>
+                              <strong>Name:</strong> {submission.name}
+                            </p>
+                            <p>
+                              <strong>Surname:</strong> {submission.surname}
+                            </p>
+
+                            {/* Image Slider */}
+                            {submission.images && submission.images.length > 0 && (
+                              <Slider {...sliderSettings}>
+                                {submission.images.map(
+                                  (imageUrl, idx) =>
+                                    imageUrl && (
+                                      <div key={idx}>
+                                        <img
+                                          src={`http://localhost:5000${imageUrl}`}
+                                          alt={`Uploaded ${idx}`}
+                                          style={{
+                                            width: "100%",
+                                            height: "auto",
+                                            borderRadius: "10px",
+                                          }}
+                                        />
+                                      </div>
+                                    )
+                                )}
+                              </Slider>
+                            )}
+
+                            {/* Video */}
+                            {submission.video && (
+                              <div style={{ marginTop: "20px" }}>
+                                <h4>Video:</h4>
+                                <video
+                                  src={`http://localhost:5000${submission.video}`}
+                                  controls
+                                  style={{ width: "100%", borderRadius: "10px" }}
+                                />
+                              </div>
+                            )}
+                            <div className="submission-btn-options">
+                              <button
+                                onClick={() => handleViewDetail(index)}
+                                style={{ marginLeft: "10px" }}
+                              >
+                                View Details
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSubmission(submission.id)}
+                                className="delete-button"
+                              >
+                                Delete
+                              </button>
+                              <img
+                              className="favorite-icon"
+                                src={favorites.includes(submission.id) ? filledStarIcon : emptyStarIcon}
+                                alt={favorites.includes(submission.id) ? "Filled Star" : "Empty Star"}
+                                onClick={() => toggleFavorite(submission.id)}
+                                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                              />
+                            </div>
+
+                          </div>
+                        ))}
+                        <div className="bottom-controls">
+                          <select
+                              value={itemsPerPage}
+                              onChange={(e) => {
+                                setItemsPerPage(Number(e.target.value));
+                                setCurrentPage(1);
+                              }}
+                              className="filter-select"
+                            >
+                              <option value={10}>10 per page</option>
+                              <option value={20}>20 per page</option>
+                            </select>
+                          <div className="pagination-controls">
+                            <div className="page-buttons">
+                              <button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="pagination-button"
+                              >
+                                Previous
+                              </button>
+                              <span className="page-info">
+                                Page {currentPage} of {getPaginatedSubmissions().totalPages}
+                              </span>
+                              <button
+                                onClick={() => setCurrentPage(prev => 
+                                  Math.min(prev + 1, getPaginatedSubmissions().totalPages)
+                                )}
+                                disabled={currentPage === getPaginatedSubmissions().totalPages}
+                                className="pagination-button"
+                              >
+                                Next
+                              </button>
+                            </div>
+                          </div>
+
+                          <button 
+                            onClick={() => clearSubmissions(expandedList)} 
+                            className="clear-button"
+                          >
+                            Clear {expandedList} Submissions
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      )}
     </div>
   );
 }
