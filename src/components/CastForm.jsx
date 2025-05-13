@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { ref, push } from "firebase/database";
 import { database } from "../firebaseConfig"; 
 import "./caststyle.css";
 import logo from "./assets/logo.png";
 
-export default function FormPage({ onSubmit }) {
+export default function FormPage({ lists = [] }) {
+  const [selectedList, setSelectedList] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
     dateOfBirth: "",
+    gender: "",
     age: "",
     ethnicity: "",
     contact: "",
@@ -22,14 +25,14 @@ export default function FormPage({ onSubmit }) {
     pantsSize: "",
     dressSize: "",
     shoeSize: "",
-    workHistory: "", // New field for work history
-    workVisa: "", // New field for valid work visa
-    criminalRecord: "", // New field for criminal record
-    driversLicense: "", // New field for valid driver's license
-    availability: "", // New field for availability
-    video: null, // For video file
-    images: [null, null, null], // Array to store three image files (Head Shot, Hands Shot, Long Shot)
-    date: new Date().toLocaleDateString(), // Current date
+    workHistory: "", 
+    workVisa: "", 
+    criminalRecord: "", 
+    driversLicense: "", 
+    availability: "", 
+    video: null, 
+    images: [null, null, null], 
+    date: new Date().toLocaleDateString(), 
 });
 
   const [showThankYou, setShowThankYou] = useState(false); // State to show thank you message
@@ -73,6 +76,11 @@ export default function FormPage({ onSubmit }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!selectedList) {
+      alert("Please select a list before submitting.");
+      return;
+    }
+
     try {
       const files = {
         images: formData.images.filter((image) => image !== null),
@@ -82,11 +90,12 @@ export default function FormPage({ onSubmit }) {
       const uploadedFiles = await uploadToLocalServer(files);
   
       // Save form data with file URLs to Firebase Realtime Database
-      const submissionsRef = ref(database, "submissions");
+      const submissionsRef = ref(database, `lists/${selectedList}/submissions`);
       await push(submissionsRef, {
         name: formData.name,
         surname: formData.surname,
         dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
         age: formData.age,
         ethnicity: formData.ethnicity,
         contact: formData.contact,
@@ -107,19 +116,38 @@ export default function FormPage({ onSubmit }) {
         availability: formData.availability,
         images: uploadedFiles.images,
         video: uploadedFiles.video,
-        date: formData.date, // Current date
+        date: formData.date, 
       });
   
       // Reset form data
       setFormData({
         name: "",
         surname: "",
+        dateOfBirth: "",
+        gender: "",
+        age: "",
+        ethnicity: "",
         contact: "",
         socialMedia: "",
-        video: null,
-        images: [null, null, null],
+        actorNumber: "",
+        agency: "",
+        agencyEmail: "",
+        height: "",
+        tshirtSize: "",
+        waistSize: "",
+        pantsSize: "",
+        dressSize: "",
+        shoeSize: "",
+        workHistory: "",
+        workVisa: "",
+        criminalRecord: "",
+        driversLicense: "",
+        availability: "",
+        images: "",
+        video: "",
+        date: "", 
       });
-  
+
       setShowThankYou(true);
       setTimeout(() => setShowThankYou(false), 5000);
     } catch (error) {
@@ -131,6 +159,7 @@ export default function FormPage({ onSubmit }) {
   return (
     <div className="form-page">
       <img src={logo} alt="Logo" className="logo" />
+
       <form className="form-container" onSubmit={handleSubmit}>
         <h4>
           Name:
@@ -161,6 +190,19 @@ export default function FormPage({ onSubmit }) {
             onChange={handleChange}
             required
           />
+        </h4>
+        <h4>
+          Gender:
+          <select
+            name="gender"
+            value={formData.gender}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
         </h4>
         <h4>
           Age:
@@ -303,6 +345,7 @@ export default function FormPage({ onSubmit }) {
             <option value="">Select</option>
             <option value="yes">Yes</option>
             <option value="no">No</option>
+            <option value="SA">I'm South African</option>
           </select>
         </h4>
         <h4>
@@ -376,6 +419,26 @@ export default function FormPage({ onSubmit }) {
             onChange={handleFileChange}
             required
           />
+        </h4>
+        <h4>
+          Select Audition:
+          <select
+            name="selectedList"
+            value={selectedList}
+            onChange={(e) => setSelectedList(e.target.value)}
+            required
+          >
+            <option value="">Select a Audition</option>
+            {lists.length === 0 ? (
+              <option disabled>No Auditions available</option>
+            ) : (
+              lists.map((list, index) => (
+                <option key={index} value={list}>
+                  {list}
+                </option>
+              ))
+            )}
+          </select>
         </h4>
         <button type="submit">Submit</button>
       </form>
