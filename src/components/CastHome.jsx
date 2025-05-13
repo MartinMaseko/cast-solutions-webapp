@@ -10,6 +10,8 @@ import banner from "./assets/castsolutions-banner.png"
 const emptyStarIcon = "https://img.icons8.com/ios/35/c52727/star--v1.png";
 const filledStarIcon = "https://img.icons8.com/material-sharp/35/c52727/filled-star.png";
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const [submissions, setSubmissions] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -385,7 +387,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                                 imageUrl && (
                                   <div key={index}>
                                     <img
-                                      src={`http://localhost:5000${imageUrl}`}
+                                      src={`${API_URL}${imageUrl}`}
                                       alt={`Uploaded ${index}`}
                                       style={{
                                         width: "100%",
@@ -404,7 +406,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                           <div style={{ marginTop: "20px" }}>
                             <h4>Video:</h4>
                             <video
-                              src={`http://localhost:5000${selectedDetail.video}`}
+                              src={`${API_URL}${selectedDetail.video}`}
                               controls
                               style={{ width: "100%", borderRadius: "10px" }}
                             />
@@ -467,7 +469,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                                     imageUrl && (
                                       <div key={idx}>
                                         <img
-                                          src={`http://localhost:5000${imageUrl}`}
+                                          src={`${API_URL}${imageUrl}`}
                                           alt={`Uploaded ${idx}`}
                                           style={{
                                             width: "100%",
@@ -486,7 +488,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                               <div style={{ marginTop: "20px" }}>
                                 <h4>Video:</h4>
                                 <video
-                                  src={`http://localhost:5000${submission.video}`}
+                                  src={`${API_URL}${submission.video}`}
                                   controls
                                   style={{ width: "100%", borderRadius: "10px" }}
                                 />

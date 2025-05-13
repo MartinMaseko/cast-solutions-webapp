@@ -8,7 +8,12 @@ const app = express();
 const PORT = 5000;
 
 // Enable CORS for all routes
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://cast-solutions.netlify.app'
+  ]
+}));
 
 // Create a storage directory if it doesn't exist
 const uploadDir = path.join(__dirname, "uploads");

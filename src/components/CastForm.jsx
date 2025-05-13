@@ -60,16 +60,17 @@ export default function FormPage({ lists = [] }) {
     if (files.video) {
       formData.append("video", files.video);
     }
-  
-    const response = await fetch("http://localhost:5000/upload", {
+    
+    const API_URL = process.env.REACT_APP_API_URL;
+    const response = await fetch(`${API_URL}/upload`, {
       method: "POST",
       body: formData,
     });
-  
+
     if (!response.ok) {
       throw new Error("Failed to upload files to the server");
     }
-  
+
     return await response.json(); // Return the uploaded file URLs
   };
 
