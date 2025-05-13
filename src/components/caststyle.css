@@ -3,6 +3,12 @@ body {
     overflow-x: hidden; 
     width: 100%;
     max-width: 100vw;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+:root {
+  font-size: 16px;
 }
 
 * {
@@ -43,7 +49,7 @@ body {
 
 .banner {
     margin-top: 10px;
-    max-width: 100%;
+    max-width: 400px;
     width: 100%;
     height: auto;
     display: block;
@@ -83,6 +89,7 @@ body {
     width: 100%;
     padding: 10px;
     resize: none;
+    font-size: 1rem;
 }
 
 .form-container textarea {
@@ -201,6 +208,8 @@ button[type="submit"] {
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+    font-size: 1.5rem; /* 24px */
+    font-weight: 900;
 }
 
 .audition-container.expanded {
