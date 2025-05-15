@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ref, onValue, set } from "firebase/database";
-import { database } from "./firebaseConfig";
+import { database, auth } from "./firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
+import Login from './components/Login';
 import CastForm from "./components/CastForm";
 import CastHome from "./components/CastHome";
 import DetailPage from "./components/DetialPage";
 
 function App() {
   const [submissions, setSubmissions] = useState([]);
-  const [lists, setLists] = useState([]); // State for lists
+  const [lists, setLists] = useState([]);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Fetch lists from Firebase
   useEffect(() => {
@@ -30,6 +34,19 @@ function App() {
       return updatedLists;
     });
   };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   const handleFormSubmit = (formData) => {
     setSubmissions([...submissions, formData]);
@@ -53,18 +70,20 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Main page (CastHome) */}
+        <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
         <Route
           path="/"
-          element={
+          element={user ? (
             <CastHome
               submissions={submissions}
               clearSubmissions={clearSubmissions}
-              lists={lists} // Pass lists to CastHome
-              addList={addList} // Pass addList to CastHome
+              lists={lists}
+              addList={addList}
             />
-          }
-        />
+          ) : (
+            <Navigate to="/login" />
+          )}
+          />
 
         {/* Form page (CastForm) */}
         <Route
