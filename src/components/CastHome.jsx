@@ -142,17 +142,17 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
     );
   };
 
-  const handleShare = () => {
+  const handleShare = (id) => {
+    const shareUrl = `${window.location.origin}/details/${id}`;
     if (navigator.share) {
-      navigator
-        .share({
-          title: "Submission Details",
-          text: `Check out this submission: ${selectedDetail.name} ${selectedDetail.surname}`,
-          url: window.location.href,
-        })
-        .catch((error) => console.error("Error sharing:", error));
+      navigator.share({
+        title: "Submission Details",
+        text: "Check out this submission!",
+        url: shareUrl,
+      }).catch((error) => console.error("Error sharing:", error));
     } else {
-      alert("Sharing is not supported on this browser.");
+      navigator.clipboard.writeText(shareUrl);
+      alert("Link copied to clipboard!");
     }
   };
 
@@ -467,7 +467,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                         <button onClick={handleBackToList} style={{ marginTop: "20px" }}>
                           Back to List
                         </button>
-                        <button onClick={handleShare} style={{ marginLeft: "10px" }}>
+                        <button onClick={() => handleShare(selectedDetail.id)} style={{ marginLeft: "10px" }}>
                           Share
                         </button>
                       </div>
