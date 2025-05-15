@@ -1,70 +1,129 @@
-# Getting Started with Create React App
+# Cast Solutions – Casting Agency Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Cast Solutions is a modern web application designed for casting agencies to manage auditions, submissions, and talent profiles efficiently. Built with React, Firebase, and Node.js, it provides a seamless experience for both agencies and talent.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+- **User Authentication:**  
+  Secure login and sign-up with Email/Password and Google (Gmail) using Firebase Authentication.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Audition List Management:**  
+  Create, search, and manage multiple audition lists.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- **Talent Submissions:**  
+  Submit detailed profiles with images and video uploads.
 
-### `npm test`
+- **Favorites & Filtering:**  
+  Mark favorite submissions and filter by gender or favorites.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- **Responsive UI:**  
+  Modern, mobile-friendly design with dark mode and brand colors.
 
-### `npm run build`
+- **Admin Controls:**  
+  Clear all submissions from a list, delete individual submissions, and manage user sessions.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Tech Stack
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- **Frontend:** React, React Router, CSS (custom, responsive)
+- **Backend:** Node.js, Express (for file uploads)
+- **Database & Auth:** Firebase Realtime Database, Firebase Authentication
+- **Hosting:** Netlify (frontend), Render (backend)
+- **Other:** Multer (file uploads), Slick Carousel (image slider)
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Getting Started
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 1. Clone the Repository
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+git clone https://github.com/yourusername/cast-solutions-app.git
+cd cast-solutions-app
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### 2. Install Dependencies
 
-## Learn More
+```bash
+npm install
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### 3. Configure Firebase
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- Create a Firebase project at [Firebase Console](https://console.firebase.google.com/).
+- Enable **Authentication** (Email/Password and Google).
+- Enable **Realtime Database**.
+- Copy your Firebase config to `src/firebaseConfig.js`.
 
-### Code Splitting
+### 4. Environment Variables
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Create a `.env.production` file in the root:
 
-### Analyzing the Bundle Size
+```
+REACT_APP_API_URL=https://your-backend.onrender.com
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Replace with your actual backend URL.
 
-### Making a Progressive Web App
+### 5. Start the Development Server
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```bash
+npm start
+```
 
-### Advanced Configuration
+### 6. Start the Backend Server
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```bash
+node server.js
+```
 
-### Deployment
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Deployment
 
-### `npm run build` fails to minify
+- **Frontend:** Deploy to Netlify. Set `REACT_APP_API_URL` in Netlify environment variables.
+- **Backend:** Deploy to Render or another Node.js hosting provider.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+---
+
+## Folder Structure
+
+```
+src/
+  components/
+    CastHome.jsx
+    CastForm.jsx
+    Login.jsx
+    ...
+  firebaseConfig.js
+  App.js
+  ...
+server.js
+public/
+uploads/
+.env.production
+```
+
+---
+
+## Customization
+
+- Update branding in `public/index.html` and `src/components/assets/`.
+- Adjust color scheme in `src/components/caststyle.css`.
+
+---
+
+## License
+
+MIT License
+
+---
+
+## Support
+
+For issues, please open an [issue on GitHub](https://github.com/yourusername/cast-solutions-app/issues) or contact the maintainer.
+
+---
