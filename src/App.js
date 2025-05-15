@@ -70,33 +70,31 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
-        <Route
-          path="/"
-          element={user ? (
-            <CastHome
-              submissions={submissions}
-              clearSubmissions={clearSubmissions}
-              lists={lists}
-              addList={addList}
-            />
-          ) : (
-            <Navigate to="/login" />
-          )}
+      <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+      <Route
+        path="/"
+        element={user ? (
+          <CastHome
+            submissions={submissions}
+            clearSubmissions={clearSubmissions}
+            lists={lists}
+            addList={addList}
           />
-
-        {/* Form page (CastForm) */}
-        <Route
-          path="/castform"
-          element={<CastForm onSubmit={handleFormSubmit} lists={lists} />}
-        />
-
-        {/* Detail page for individual submissions */}
-        <Route
-          path="/details/:id"
-          element={<DetailPage submissions={submissions} />}
-        />
-      </Routes>
+        ) : (
+          <Navigate to="/login" />
+        )}
+      />
+      {/* Make CastForm public */}
+      <Route
+        path="/castform"
+        element={<CastForm onSubmit={handleFormSubmit} lists={lists} />}
+      />
+      {/* Make details public */}
+      <Route
+        path="/details/:id"
+        element={<DetailPage submissions={submissions} />}
+      />
+    </Routes>
     </Router>
   );
 }

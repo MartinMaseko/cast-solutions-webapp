@@ -295,6 +295,13 @@ button[type="submit"] {
   gap: 15px;
 }
 
+.selected-detial a {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  display: inline-block;
+  max-width: 100%;
+}
+
 .pagination-button {
   background-color: #C52727;
   color: whitesmoke;
