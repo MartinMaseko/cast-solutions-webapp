@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Slider from "react-slick"; 
 import { ref, onValue, set, get, serverTimestamp } from "firebase/database";
 import { database } from "../firebaseConfig";
+import { getAuth, signOut } from 'firebase/auth';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import logo from "./assets/logo.png";
@@ -24,7 +25,9 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  
 
   // Fetch lists from Firebase
   useEffect(() => {
@@ -133,6 +136,12 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
     }
   };
 
+  const getFilteredLists = () => {
+    return lists.filter(list => 
+      list.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
   const handleShare = () => {
     if (navigator.share) {
       navigator
@@ -167,6 +176,17 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
     };
   };
 
+  const auth = getAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   const menuStyles = {
     container: {
       position: 'absolute',
@@ -197,6 +217,13 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
     subMenu: {
       paddingLeft: '15px',
       borderLeft: '2px solid #C52727',
+    },
+    userProfile: {
+      borderTop: '1px solid #C52727',
+      marginTop: '10px',
+      paddingTop: '10px',
+      color: 'whitesmoke',
+      fontSize: '0.9rem'
     }
   };
 
@@ -225,13 +252,15 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
             style={{ cursor: 'pointer' }}
           />
           <div style={menuStyles.dropdownMenu}>
-            <div 
-              style={menuStyles.menuItem}
-              onClick={() => navigate('/castform')}
-              onMouseOver={(e) => e.target.style.backgroundColor = '#1E1F28'}
-              onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
-            >
-              Submit Audition
+            <div style={menuStyles.menuItem}>
+              <div
+                style={menuStyles.menuItem}
+                onClick={() => navigate('/castform')}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#1E1F28'}
+                onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
+              >
+                Submit Audition
+              </div>
             </div>
             <div style={menuStyles.menuItem}>
               Audition Lists
@@ -252,6 +281,19 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                 ))}
               </div>
             </div>
+            {auth.currentUser && (
+              <div style={menuStyles.userProfile}>
+                <div>{auth.currentUser.email}</div>
+                <div 
+                  style={menuStyles.menuItem}
+                  onClick={handleLogout}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#1E1F28'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
+                >
+                  Logout
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </nav>
@@ -280,7 +322,16 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
         <img src={banner} alt="Banner" className="banner" />
           <div className="audition-list">
             <h3>Auditions</h3>
-            {lists.map((list, index) => (
+            <div className="search-container">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search audition lists..."
+                className="search-input"
+              />
+            </div>
+            {getFilteredLists().map((list, index) => (
               <div key={index} style={{ marginBottom: "10px" }}>
                 <div
                   onClick={() => handleExpandList(list)}
