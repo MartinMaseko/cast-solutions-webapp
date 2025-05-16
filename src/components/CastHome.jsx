@@ -1,18 +1,71 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from 'react-router-dom';
 import Slider from "react-slick"; 
 import { ref, onValue, set, get, serverTimestamp } from "firebase/database";
 import { database } from "../firebaseConfig";
-import { getAuth, signOut } from 'firebase/auth';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import logo from "./assets/logo.png";
-import banner from "./assets/castsolutions-banner.png"
+
+import banner from "./assets/castsolutions-banner.png";
+import NavBar from './NavBar';
+
 const emptyStarIcon = "https://img.icons8.com/ios/35/c52727/star--v1.png";
 const filledStarIcon = "https://img.icons8.com/material-sharp/35/c52727/filled-star.png";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
+/**
+ * DetailsPage component for managing and displaying audition lists and their submissions.
+ *
+ * @component
+ * @param {Object} props - Component props.
+ * @param {Function} props.clearSubmissions - Function to clear all submissions for a given list.
+ * @param {string[]} props.lists - Array of audition list names.
+ * @param {Function} props.addList - Function to add a new audition list.
+ *
+ * @returns {JSX.Element} The rendered DetailsPage component.
+ *
+ * @description
+ * This component allows users to:
+ * - Create new audition lists.
+ * - View, filter, and search through existing audition lists.
+ * - Expand a list to view its submissions.
+ * - Filter submissions by gender and favorites.
+ * - Paginate through submissions.
+ * - View detailed information for a submission, including images and video.
+ * - Mark submissions as favorites.
+ * - Share or delete individual submissions.
+ * - Clear all submissions from a list.
+ *
+ * State:
+ * - submissions: Array of current submissions for the expanded list.
+ * - favorites: Array of favorite submission IDs.
+ * - selectedDetail: The currently selected submission for detail view.
+ * - newListName: Name for a new audition list.
+ * - expandedList: Name of the currently expanded audition list.
+ * - isLoading: Loading state for creating a new list.
+ * - genderFilter: Filter for submission gender.
+ * - showFavoritesOnly: Whether to show only favorite submissions.
+ * - itemsPerPage: Number of submissions per page.
+ * - currentPage: Current page number for pagination.
+ * - searchTerm: Search term for filtering lists.
+ *
+ * Effects:
+ * - Fetches lists and submissions from Firebase.
+ * - Handles navigation and scrolling to selected lists.
+ *
+ * Methods:
+ * - handleCreateList: Creates a new audition list in Firebase.
+ * - handleExpandList: Expands/collapses a list to show/hide submissions.
+ * - handleViewDetail: Shows detailed view for a submission.
+ * - handleDeleteSubmission: Deletes a submission from Firebase.
+ * - handleBackToList: Returns to the list view from detail view.
+ * - toggleFavorite: Adds/removes a submission from favorites.
+ * - getFilteredLists: Returns lists filtered by search term.
+ * - handleShare: Shares a submission link or copies it to clipboard.
+ * - getFilteredSubmissions: Returns submissions filtered by gender and favorites.
+ * - getPaginatedSubmissions: Returns paginated submissions and total page count.
+ */
 export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const [submissions, setSubmissions] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -24,9 +77,8 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const navigate = useNavigate();
+  const location = useLocation();
   
 
   // Fetch lists from Firebase
@@ -56,6 +108,21 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
       return () => unsubscribe();
     }
   }, [expandedList]);
+
+  useEffect(() => {
+    if (location.state?.selectedList) {
+      setExpandedList(location.state.selectedList);
+
+      window.history.replaceState({}, document.title);
+      
+      setTimeout(() => {
+        const listElement = document.querySelector(`[data-list="${location.state.selectedList}"]`);
+        if (listElement) {
+          listElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [location.state]);
 
   const handleCreateList = async () => {
     if (newListName.trim() === "") {
@@ -176,56 +243,6 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
     };
   };
 
-  const auth = getAuth();
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate('/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
-  const menuStyles = {
-    container: {
-      position: 'absolute',
-      top: '20px',
-      right: '20px',
-      zIndex: 1000,
-    },
-    dropdownMenu: {
-      position: 'absolute',
-      top: '40px',
-      right: '0',
-      backgroundColor: '#2A2B38',
-      borderRadius: '5px',
-      padding: '10px',
-      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-      display: isMenuOpen ? 'block' : 'none',
-    },
-    menuItem: {
-      color: 'whitesmoke',
-      padding: '8px 15px',
-      cursor: 'pointer',
-      display: 'block',
-      textDecoration: 'none',
-      whiteSpace: 'nowrap',
-      transition: 'all 0.3s ease',
-      fontSize: '22px',
-    },
-    subMenu: {
-      paddingLeft: '15px',
-      borderLeft: '2px solid #C52727',
-    },
-    userProfile: {
-      borderTop: '1px solid #C52727',
-      marginTop: '10px',
-      paddingTop: '10px',
-      color: 'whitesmoke',
-      fontSize: '0.9rem'
-    }
-  };
 
   // Slider settings
   const sliderSettings = {
@@ -239,64 +256,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
 
   return (
     <div className="details-page">
-      <nav>
-        <img src={logo} alt="Logo" className="Homelogo" />
-        <div style={menuStyles.container}>
-          <img
-          className="menu-icon"
-            width="35"
-            height="35"
-            src="https://img.icons8.com/material-outlined/35/F5F5F5/menu--v1.png"
-            alt="menu"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            style={{ cursor: 'pointer' }}
-          />
-          <div style={menuStyles.dropdownMenu}>
-            <div style={menuStyles.menuItem}>
-              <div
-                style={menuStyles.menuItem}
-                onClick={() => navigate('/castform')}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#1E1F28'}
-                onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
-              >
-                Submit Audition
-              </div>
-            </div>
-            <div style={menuStyles.menuItem}>
-              Audition Lists
-              <div style={menuStyles.subMenu}>
-                {lists.map((list, index) => (
-                  <div
-                    key={index}
-                    style={menuStyles.menuItem}
-                    onClick={() => {
-                      handleExpandList(list);
-                      setIsMenuOpen(false);
-                    }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#1E1F28'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
-                  >
-                    {list}
-                  </div>
-                ))}
-              </div>
-            </div>
-            {auth.currentUser && (
-              <div style={menuStyles.userProfile}>
-                <div>{auth.currentUser.email}</div>
-                <div 
-                  style={menuStyles.menuItem}
-                  onClick={handleLogout}
-                  onMouseOver={(e) => e.target.style.backgroundColor = '#1E1F28'}
-                  onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
-                >
-                  Logout
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </nav>
+      <NavBar lists={lists} />
 
       {/* List Management */}
       <div className="list-management">
@@ -332,7 +292,11 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
               />
             </div>
             {getFilteredLists().map((list, index) => (
-              <div key={index} style={{ marginBottom: "10px" }}>
+              <div 
+                key={index} 
+                style={{ marginBottom: "10px" }}
+                data-list={list} 
+              >
                 <div
                   onClick={() => handleExpandList(list)}
                   className={`audition-container ${expandedList === list ? 'expanded' : ''}`}

@@ -4,6 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import './caststyle.css';
 import logo from './assets/logo.png';
 
+/**
+ * Login component for user authentication.
+ * 
+ * Provides both login and sign-up functionality using email/password and Google sign-in.
+ * Handles authentication errors and navigation upon successful login or registration.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered Login component.
+ * 
+ * @example
+ * <Login />
+ */
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

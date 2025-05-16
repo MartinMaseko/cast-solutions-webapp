@@ -7,6 +7,31 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
+/**
+ * DetailPage component displays the details of a specific submission.
+ *
+ * Fetches submission data from Firebase Realtime Database based on the `id` parameter from the URL.
+ * Shows all available fields of the submission, including images (with a slider) and video if provided.
+ * Handles loading and not-found states.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered detail page for a submission.
+ *
+ * @example
+ * // Used in a React Router route:
+ * <Route path="/details/:id" element={<DetailPage />} />
+ *
+ * @dependencies
+ * - React (useState, useEffect)
+ * - react-router-dom (useParams, useNavigate)
+ * - Firebase (ref, get, database)
+ * - react-slick (Slider)
+ * 
+ * @remarks
+ * - Requires `REACT_APP_API_URL` environment variable for image/video URLs.
+ * - Expects `submission.images` to be an array of image URLs.
+ * - Expects `submission.video` to be a video URL.
+ */
 export default function DetailPage() {
   const { id } = useParams();
   const [submission, setSubmission] = useState(null);
