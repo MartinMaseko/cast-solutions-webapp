@@ -47,6 +47,7 @@ export default function NavBar({ lists = [] }) {
       borderRadius: '5px',
       padding: '10px',
       boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+      zIndex: 2000,
       display: isMenuOpen ? 'block' : 'none',
     },
     menuItem: {
