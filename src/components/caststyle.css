@@ -36,6 +36,12 @@ body {
     max-width: 100vw;
     padding: 0;
     overflow-x: hidden;
+    text-align: center;
+}
+
+.brief-info,
+.content-box {
+  text-align: start;
 }
 
 .audition-list {
@@ -56,8 +62,10 @@ body {
 }
 
 .Homelogo {
-    max-width: 150px;
-    width: 100%;
+    height: 55px;
+    width: auto;
+    transition: transform 0.2s ease;
+    cursor: pointer;
 }
 
 .form-container {
@@ -75,6 +83,7 @@ body {
 
 .form-container input[type="text"],
 .form-container input[type="number"],
+.form-container input[type="date"],
 .form-container textarea,
 .form-container select,
 .audition-input {
@@ -85,7 +94,7 @@ body {
     background-color: #2A2B38;
     color: whitesmoke;
     font-size: 16px;
-    max-width: 300px;
+    max-width: 400px;
     width: 100%;
     padding: 10px;
     resize: none;
@@ -101,7 +110,16 @@ nav {
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    padding: 10px;
+    height: 80px;
+    background-color: #1E1F28;
+    padding: 10px 20px; 
+}
+
+.menu-container {
+    position: relative;  
+    top: 0;
+    right: 0;
+    z-index: 1000;
 }
 
 .form-container input[type="text"]:focus {
@@ -325,8 +343,15 @@ button[type="submit"] {
   margin-top: 0;
 }
 
+.menu-container {
+    display: flex;
+    align-items: center;
+}
+
 .menu-icon {
-  transition: transform 0.3s ease;
+    width: 35px;
+    height: 35px;
+    transition: transform 0.3s ease;
 }
 
 .menu-icon:hover {
@@ -479,6 +504,141 @@ button[type="submit"] {
     text-align: center;
 }
 
+.tox-tinymce {
+  border-radius: 4px !important;
+  margin: 1rem 0;
+  resize: none;
+}
+
+.form-container .tox-tinymce {
+  min-height: 300px;
+  resize: none;
+}
+
+.briefs-list {
+  margin-bottom: 10px;
+}
+
+
+.brief-details {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.brief-info {
+  background-color: #2A2B38;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.brief-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.brief-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section {
+  background-color: #2A2B38;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.content-box {
+  margin-top: 1rem;
+  line-height: 1.6;
+}
+
+.image-slider {
+  position: relative;
+  margin: 2rem 0;
+  background-color: #2A2B38;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.slider-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 8px;
+}
+
+.slider-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: none;
+  background-color: #1E1F28;
+}
+
+.slider-image.active {
+  display: block;
+}
+
+.slider-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #C52727;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.slider-button:hover {
+  opacity: 1;
+  background-color: #C52727;
+}
+
+.prev-button {
+  left: 10px;
+}
+
+.next-button {
+  right: 10px;
+}
+
+.slider-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 1rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #2A2B38;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  background-color: #C52727;
+}
+
 @media screen and (min-width: 1024px) {
     .main-content {
         display: grid;
@@ -579,31 +739,32 @@ button[type="submit"] {
 
     .form-container input[type="text"],
     .form-container input[type="number"],
+    .form-container input[type="date"],
     .form-container textarea,
     .form-container select,
     .audition-input {
-        max-width: 400px;
+        max-width: 700px;
         margin: 10px auto;
     }
 
-    .form-container textarea {
-        max-width: 400px;
+  .form-container textarea {
+        max-width: 700px;
         margin: 10px auto;
     }
 
-    .form-container input[type="file"] {
-        max-width: 400px;
+  .form-container input[type="file"] {
+        max-width: 700px;
         margin: 10px auto;
         display: block;
     }
 
-    button[type="submit"] {
+  button[type="submit"] {
         display: block;
         margin: 2rem auto;
         min-width: 400px;
     }
 
-    .search-container {
+  .search-container {
     max-width: 100%;
     margin: 1rem auto;
   }
@@ -612,4 +773,5 @@ button[type="submit"] {
     font-size: 1.1rem;
     padding: 1rem;
   }
+
 }
