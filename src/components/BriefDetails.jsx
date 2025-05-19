@@ -4,6 +4,7 @@ import { ref, get } from "firebase/database";
 import { database } from "../firebaseConfig";
 import "./caststyle.css";
 import logo from "./assets/logo.png";
+import Footer from "./Footer";
 
 /**
  * Displays the details of a specific brief, including reference images, roles, notes, and other information.
@@ -57,6 +58,7 @@ export default function BriefDetails() {
   if (!brief) return <div className="details-page">Brief not found.</div>;
 
   return (
+    <>
     <div className="details-page">
       <img src={logo} alt="Logo" className="logo" />
       
@@ -143,6 +145,8 @@ export default function BriefDetails() {
           </button>
         </div>
       </div>
+      <Footer />
     </div>
+    </>
   );
 }

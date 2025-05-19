@@ -4,6 +4,7 @@ import { ref, push, onValue, set } from "firebase/database";
 import { database } from "../firebaseConfig";
 import { Editor } from "@tinymce/tinymce-react";
 import NavBar from "./NavBar";
+import Footer from "./Footer";
 import "./caststyle.css";
 
 /**
@@ -367,6 +368,7 @@ export default function CreateBrief() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
     </>
   );

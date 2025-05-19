@@ -9,7 +9,6 @@ import CastHome from "./components/CastHome";
 import DetailPage from "./components/DetialPage";
 import BriefDetails from "./components/BriefDetails";
 import CreateBrief from "./components/CreateBrief";
-import Footer from "./components/Footer";
 import spinner from './components/assets/spinner.gif';
 
 /**
@@ -146,7 +145,6 @@ function App() {
         />
         <Route path="/brief/:id" element={<BriefDetails />} />
       </Routes>
-      <Footer />
     </Router>
   );
 }
