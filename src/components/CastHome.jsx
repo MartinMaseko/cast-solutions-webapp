@@ -79,6 +79,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [expandedImage, setExpandedImage] = useState(null);
   const location = useLocation();
   
 
@@ -244,6 +245,34 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
     };
   };
 
+  {expandedImage && (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        background: "rgba(30,31,40,0.95)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 3000
+      }}
+      onClick={() => setExpandedImage(null)}
+    >
+      <img
+        src={expandedImage}
+        alt="Expanded"
+        style={{
+          maxWidth: "90vw",
+          maxHeight: "90vh",
+          borderRadius: "12px",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
+        }}
+      />
+    </div>
+  )}
 
   // Slider settings
   const sliderSettings = {
@@ -410,7 +439,9 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                                         width: "100%",
                                         height: "auto",
                                         borderRadius: "10px",
+                                        cursor: "pointer"
                                       }}
+                                      onClick={() => setExpandedImage(`${API_URL}${imageUrl}`)}
                                     />
                                   </div>
                                 )
