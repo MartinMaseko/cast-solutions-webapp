@@ -9,6 +9,8 @@ import CastHome from "./components/CastHome";
 import DetailPage from "./components/DetialPage";
 import BriefDetails from "./components/BriefDetails";
 import CreateBrief from "./components/CreateBrief";
+import Footer from "./components/Footer";
+import spinner from './components/assets/spinner.gif';
 
 /**
  * Main application component for the Cast Solutions App.
@@ -75,7 +77,24 @@ function App() {
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+      }}>
+        <img
+          src={spinner}
+          alt="Loading..."
+          style={{
+            width: 48,
+            height: 48
+          }}
+        />
+      </div>
+    );
   }
 
   const handleFormSubmit = (formData) => {
@@ -99,34 +118,35 @@ function App() {
 
   return (
     <Router>
-      <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
-      <Route
-        path="/"
-        element={user ? (
-          <CastHome
-            submissions={submissions}
-            clearSubmissions={clearSubmissions}
-            lists={lists}
-            addList={addList}
-          />
-        ) : (
-          <Navigate to="/login" />
-        )}
-      />
-      <Route path="/create-brief" element={user ? <CreateBrief /> : <Navigate to="/login" />} />
-      {/* Make CastForm public */}
-      <Route
-        path="/castform"
-        element={<CastForm onSubmit={handleFormSubmit} lists={lists} />}
-      />
-      {/* Make details public */}
-      <Route
-        path="/details/:id"
-        element={<DetailPage submissions={submissions} />}
-      />
-      <Route path="/brief/:id" element={<BriefDetails />} />
-    </Routes>
+        <Routes>
+        <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+        <Route
+          path="/"
+          element={user ? (
+            <CastHome
+              submissions={submissions}
+              clearSubmissions={clearSubmissions}
+              lists={lists}
+              addList={addList}
+            />
+          ) : (
+            <Navigate to="/login" />
+          )}
+        />
+        <Route path="/create-brief" element={user ? <CreateBrief /> : <Navigate to="/login" />} />
+        {/* Make CastForm public */}
+        <Route
+          path="/castform"
+          element={<CastForm onSubmit={handleFormSubmit} lists={lists} />}
+        />
+        {/* Make details public */}
+        <Route
+          path="/details/:id"
+          element={<DetailPage submissions={submissions} />}
+        />
+        <Route path="/brief/:id" element={<BriefDetails />} />
+      </Routes>
+      <Footer />
     </Router>
   );
 }

@@ -5,6 +5,7 @@ body {
     max-width: 100vw;
     font-size: 1rem;
     line-height: 1.5;
+    padding-bottom: 100px;
 }
 
 :root {
@@ -43,6 +44,7 @@ body {
 .content-box {
   text-align: start;
 }
+
 
 .audition-list {
     padding: 1em;
@@ -228,6 +230,7 @@ button[type="submit"] {
     transition: all 0.3s ease;
     font-size: 1.5rem; /* 24px */
     font-weight: 900;
+    padding-bottom: 50px;
 }
 
 .audition-container.expanded {
@@ -637,6 +640,36 @@ button[type="submit"] {
 
 .dot.active {
   background-color: #C52727;
+}
+
+.app-footer {
+  width: 100%;
+  background: #1E1F28;
+  color: whitesmoke;
+  padding: 0.5rem;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 9999;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  max-height: 100px;
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-logo {
+  height: 100px;
+  width: 250px;
+  object-fit: contain;
+}
+
+.footer-text {
+  font-size: 0.7rem;
+  letter-spacing: 1px;
 }
 
 @media screen and (min-width: 1024px) {
