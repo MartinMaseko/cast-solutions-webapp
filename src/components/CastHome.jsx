@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import Slider from "react-slick"; 
 import { ref, onValue, set, get, serverTimestamp } from "firebase/database";
 import { database } from "../firebaseConfig";
+import Footer from "./Footer";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
@@ -255,6 +256,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   };
 
   return (
+    <>
     <div className="details-page">
       <NavBar lists={lists} />
 
@@ -585,6 +587,8 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
             ))}
           </div>
         </div>
+        <Footer />
     </div>
+    </>
   );
 }
