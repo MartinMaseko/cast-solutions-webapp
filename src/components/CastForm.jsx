@@ -30,8 +30,6 @@ export default function FormPage({ lists = [] }) {
     criminalRecord: "", 
     driversLicense: "", 
     availability: "", 
-    video: null, 
-    images: [null, null, null], 
     date: new Date().toLocaleDateString(), 
 });
 
@@ -40,39 +38,6 @@ export default function FormPage({ lists = [] }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-  };
-
-  const handleFileChange = (e) => {
-    setFormData({ ...formData, video: e.target.files[0] });
-  };
-
-  const handleImageChange = (index, file) => {
-    const updatedImages = [...formData.images];
-    updatedImages[index] = file;
-    setFormData({ ...formData, images: updatedImages });
-  };
-
-  const uploadToLocalServer = async (files) => {
-    const formData = new FormData();
-    files.images.forEach((image) => {
-      formData.append("images", image);
-    });
-    if (files.video) {
-      formData.append("video", files.video);
-    }
-    
-    const API_URL = process.env.REACT_APP_API_URL;
-    
-    const response = await fetch(`${API_URL}/upload`, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to upload files to the server");
-    }
-
-    return await response.json(); // Return the uploaded file URLs
   };
 
   const handleSubmit = async (e) => {
@@ -84,12 +49,6 @@ export default function FormPage({ lists = [] }) {
     }
 
     try {
-      const files = {
-        images: formData.images.filter((image) => image !== null),
-        video: formData.video,
-      };
-  
-      const uploadedFiles = await uploadToLocalServer(files);
   
       // Save form data with file URLs to Firebase Realtime Database
       const submissionsRef = ref(database, `lists/${selectedList}/submissions`);
@@ -116,8 +75,6 @@ export default function FormPage({ lists = [] }) {
         criminalRecord: formData.criminalRecord,
         driversLicense: formData.driversLicense,
         availability: formData.availability,
-        images: uploadedFiles.images,
-        video: uploadedFiles.video,
         date: formData.date, 
       });
   
@@ -145,8 +102,6 @@ export default function FormPage({ lists = [] }) {
         criminalRecord: "",
         driversLicense: "",
         availability: "",
-        images: "",
-        video: "",
         date: "", 
       });
 
@@ -388,39 +343,6 @@ export default function FormPage({ lists = [] }) {
             <option value="yes">Yes</option>
             <option value="no">No</option>
           </select>
-        </h4>
-        <h4>
-          Head Shot
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleImageChange(0, e.target.files[0])}
-          />
-        </h4>
-        <h4>
-          Hands Shot
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleImageChange(1, e.target.files[0])}
-          />
-        </h4>
-        <h4>
-          Long Shot
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleImageChange(2, e.target.files[0])}
-          />
-        </h4>
-        <h4>
-          Video Upload (Max 2 min):
-          <input
-            type="file"
-            accept="video/*"
-            onChange={handleFileChange}
-            required
-          />
         </h4>
         <h4>
           Select Audition:
