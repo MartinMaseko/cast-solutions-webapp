@@ -1,55 +1,61 @@
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
-const cors = require("cors"); // Import the cors middleware
+const cors = require("cors");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 3000;
 
-// Enable CORS for all routes
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://cast-solutions.netlify.app'
-  ]
-}));
+// CORS configuration
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || "*",
+    methods: ["GET", "POST"],
+  })
+);
 
-// Create a storage directory if it doesn't exist
-const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-
-// Configure Multer for file uploads
+// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Save files to the "uploads" directory
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`); // Add a timestamp to the file name
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   },
 });
 
 const upload = multer({ storage });
 
-// Middleware to parse JSON
-app.use(express.json());
+// Image upload endpoint
+app.post(
+  "/api/upload/images",
+  upload.array("images", 5),
+  (req, res) => {
+    try {
+      const urls = req.files.map(
+        (file) => `${process.env.APP_URL}/uploads/${file.filename}`
+      );
+      res.json({ urls });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
 
-// Serve uploaded files statically
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// Endpoint for file uploads
-app.post("/upload", upload.fields([{ name: "images" }, { name: "video" }]), (req, res) => {
-  const files = req.files;
-  const response = {
-    images: files.images ? files.images.map((file) => `/uploads/${file.filename}`) : [],
-    video: files.video ? `/uploads/${files.video[0].filename}` : null,
-  };
-  res.status(200).json(response);
+// Video upload endpoint
+app.post("/api/upload/video", upload.single("video"), (req, res) => {
+  try {
+    const url = `${process.env.APP_URL}/uploads/${req.file.filename}`;
+    res.json({ url });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// Start the server
+// Serve uploaded files
+app.use("/uploads", express.static("uploads"));
+
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

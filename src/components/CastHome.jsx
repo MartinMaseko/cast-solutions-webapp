@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
-import { ref, onValue, set, get, serverTimestamp, update, remove } from "firebase/database";
+import { ref as dbRef, onValue, set, get, serverTimestamp, update, remove } from "firebase/database";
 import { database } from "../firebaseConfig";
 import Footer from "./Footer";
+import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import NavBar from './NavBar';
@@ -75,11 +76,14 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const location = useLocation();
   const [registrationSearch, setRegistrationSearch] = useState("");
   const [allSubmissions, setAllSubmissions] = useState([]);
+  const [mediaUploadId, setMediaUploadId] = useState(null); 
+  const [mediaFiles, setMediaFiles] = useState({ images: [], video: null });
+  const [uploading, setUploading] = useState(false);
   
 
   // Fetch all submissions once on mount
   useEffect(() => {
-  const listsRef = ref(database, "lists");
+  const listsRef = dbRef(database, "lists");
   const unsubscribe = onValue(listsRef, (snapshot) => {
     const data = snapshot.val();
     let all = [];
@@ -100,7 +104,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
 
   // Fetch lists from Firebase
   useEffect(() => {
-    const listsRef = ref(database, "lists");
+    const listsRef = dbRef(database, "lists");
     const unsubscribe = onValue(listsRef, (snapshot) => {
       const data = snapshot.val();
       const listsArray = data ? Object.keys(data) : [];
@@ -113,7 +117,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   // Fetch submissions for the expanded list
   useEffect(() => {
     if (expandedList) {
-      const submissionsRef = ref(database, `lists/${expandedList}/submissions`);
+      const submissionsRef = dbRef(database, `lists/${expandedList}/submissions`);
       const unsubscribe = onValue(submissionsRef, (snapshot) => {
         const data = snapshot.val();
         const submissionsArray = data
@@ -142,13 +146,79 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   }, [location.state]);
 
   useEffect(() => {
-    const favRef = ref(database, "favorites");
+    const favRef = dbRef(database, "favorites");
     const unsubscribe = onValue(favRef, (snapshot) => {
       const data = snapshot.val();
       setFavorites(data ? Object.keys(data) : []);
     });
     return () => unsubscribe();
   }, []);
+
+  const handleUploadMedia = async (submissionId, audition) => {
+    setUploading(true);
+    try {
+      // 1. Upload images
+      let imageUrls = [];
+      if (mediaFiles.images.length > 0) {
+        const formData = new FormData();
+        mediaFiles.images.forEach(img => formData.append("images", img));
+        
+        const imgRes = await fetch("https://cast-solutions-webapp-production.up.railway.app/api/upload/images", {
+          method: "POST",
+          body: formData,
+          headers: {
+            // Add any required headers for Railway
+            'Accept': 'application/json',
+          }
+        });
+        
+        if (!imgRes.ok) {
+          throw new Error(`Image upload failed: ${imgRes.statusText}`);
+        }
+        
+        const imgData = await imgRes.json();
+        imageUrls = imgData.urls;
+      }
+
+      // 2. Upload video
+      let videoUrl = null;
+      if (mediaFiles.video) {
+        const formData = new FormData();
+        formData.append("video", mediaFiles.video);
+        
+        const vidRes = await fetch("https://cast-solutions-webapp-production.up.railway.app/api/upload/video", {
+          method: "POST",
+          body: formData,
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+        
+        if (!vidRes.ok) {
+          throw new Error(`Video upload failed: ${vidRes.statusText}`);
+        }
+        
+        const vidData = await vidRes.json();
+        videoUrl = vidData.url;
+      }
+
+      // 3. Save URLs to Firebase
+      const submissionRef = dbRef(database, `lists/${audition}/submissions/${submissionId}`);
+      await update(submissionRef, {
+        images: imageUrls,
+        video: videoUrl,
+      });
+
+      setMediaUploadId(null);
+      setMediaFiles({ images: [], video: null });
+      alert("Media uploaded successfully!");
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert(`Upload failed: ${err.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleGenerateNumber = async (audition, actorId) => {
     const actorsInList = allSubmissions.filter(sub => sub.audition === audition);
@@ -162,7 +232,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
       nextNumber++;
     }
 
-    const submissionRef = ref(database, `lists/${audition}/submissions/${actorId}`);
+    const submissionRef = dbRef(database, `lists/${audition}/submissions/${actorId}`);
     await update(submissionRef, { auditionNumber: nextNumber });
   };
 
@@ -180,7 +250,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
 
     setIsLoading(true);
     try {
-      const listsRef = ref(database, `lists/${newListName}`);
+      const listsRef = dbRef(database, `lists/${newListName}`);
       
       // First check if list already exists
       const snapshot = await get(listsRef);
@@ -229,7 +299,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
     
     if (window.confirm('Are you sure you want to delete this submission?')) {
       try {
-        const submissionRef = ref(database, `lists/${expandedList}/submissions/${submissionId}`);
+        const submissionRef = dbRef(database, `lists/${expandedList}/submissions/${submissionId}`);
         await set(submissionRef, null);
         console.log('Submission deleted successfully');
       } catch (error) {
@@ -244,7 +314,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   };
 
   const toggleFavorite = (id) => {
-    const favRef = ref(database, `favorites/${id}`);
+    const favRef = dbRef(database, `favorites/${id}`);
     if (favorites.includes(id)) {
       remove(favRef);
       setFavorites(favorites.filter((favId) => favId !== id));
@@ -494,6 +564,29 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                         <p>
                           <strong>Availability:</strong> {selectedDetail.availability}
                         </p>
+                        {selectedDetail.images && selectedDetail.images.length > 0 && (
+                          <Slider dots={true} infinite={false} speed={500} slidesToShow={1} slidesToScroll={1}>
+                            {selectedDetail.images.map((imgUrl, idx) => (
+                              <div key={idx}>
+                                <img
+                                  src={imgUrl}
+                                  alt={`Actor Media ${idx}`}
+                                  style={{ width: "100%", borderRadius: "10px", marginBottom: "1rem" }}
+                                />
+                              </div>
+                            ))}
+                          </Slider>
+                        )}
+
+                        {selectedDetail.video && (
+                          <div style={{ marginTop: "20px" }}>
+                            <video
+                              src={selectedDetail.video}
+                              controls
+                              style={{ width: "100%", borderRadius: "10px" }}
+                            />
+                          </div>
+                        )}
                         <button onClick={handleBackToList} style={{ marginTop: "20px" }}>
                           Back to List
                         </button>
@@ -509,11 +602,14 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                             key={submission.id}
                             className="submission-item"
                           >
+                          <p>
+                            {submission.auditionNumber ? `#${submission.auditionNumber}` : ""}
+                          </p>
                             <p>
-                              <strong>Name:</strong> {submission.name}
+                              {submission.name}
                             </p>
                             <p>
-                              <strong>Surname:</strong> {submission.surname}
+                              {submission.surname}
                             </p>
                             <div className="submission-btn-options">
                               <button
@@ -521,6 +617,9 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                                 style={{ marginLeft: "10px" }}
                               >
                                 View Details
+                              </button>
+                              <button onClick={() => setMediaUploadId(submission.id)}>
+                                Add Media
                               </button>
                               <button
                                 onClick={() => handleDeleteSubmission(submission.id)}
@@ -537,7 +636,30 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                                 onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                               />
                             </div>
-
+                             {/* Media Upload Modal */}
+                              {mediaUploadId === submission.id && (
+                                <div className="media-upload-modal">
+                                  <h4>Upload Images</h4>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={e => setMediaFiles(prev => ({ ...prev, images: Array.from(e.target.files) }))}
+                                  />
+                                  <h4>Upload Audition Video</h4>
+                                  <input
+                                    type="file"
+                                    accept="video/*"
+                                    onChange={e => setMediaFiles(prev => ({ ...prev, video: e.target.files[0] }))}
+                                  />
+                                  <button onClick={() => handleUploadMedia(submission.id, expandedList)} disabled={uploading}>
+                                    {uploading ? "Uploading..." : "Upload"}
+                                  </button>
+                                  <button onClick={() => { setMediaUploadId(null); setMediaFiles({ images: [], video: null }); }}>
+                                    Cancel
+                                  </button>
+                                </div>
+                              )}
                           </div>
                         ))}
                         <div className="bottom-controls">

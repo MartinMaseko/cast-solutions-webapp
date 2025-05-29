@@ -221,6 +221,75 @@ button[type="submit"] {
     width: 100%;
 }
 
+.media-upload-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #23242d;
+  color: whitesmoke;
+  padding: 2rem 2.5rem;
+  border-radius: 12px;
+  z-index: 2000;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  min-width: 320px;
+  max-width: 95vw;
+}
+
+.media-upload-modal h4 {
+  margin-bottom: 1rem;
+}
+
+.media-upload-modal input[type="file"] {
+  display: block;
+  margin-bottom: 1.5rem;
+  background: #2A2B38;
+  color: whitesmoke;
+  border-radius: 5px;
+  padding: 10px;
+  width: 100%;
+}
+
+.media-upload-modal input[type="file"]::file-selector-button {
+  background: #23242d;
+  color: whitesmoke;
+  border-radius: 5px;
+  padding: 10px;
+  font-weight: bold;
+  border: none;
+}
+
+.media-upload-modal input[type="file"]::file-selector-button:hover {
+  background: #C52727;
+  color: whitesmoke;
+}
+
+.media-upload-modal button {
+  min-width: 120px;
+  margin-right: 1rem;
+  margin-top: 0.5rem;
+  background: #C52727;
+  color: whitesmoke;
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.media-upload-modal button:last-child {
+  background: #1E1F28;
+  color: #C52727;
+  border: 1px solid #C52727;
+  margin-right: 0;
+}
+
+.media-upload-modal button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .audition-container {
     margin-top: 10px;
     cursor: pointer;
