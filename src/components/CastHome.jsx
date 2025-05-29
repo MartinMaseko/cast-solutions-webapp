@@ -157,52 +157,29 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const handleUploadMedia = async (submissionId, audition) => {
     setUploading(true);
     try {
-      // 1. Upload images
-      let imageUrls = [];
-      if (mediaFiles.images.length > 0) {
-        const formData = new FormData();
-        mediaFiles.images.forEach(img => formData.append("images", img));
-        
-        const imgRes = await fetch("https://cast-solutions-webapp-production.up.railway.app/api/upload/images", {
-          method: "POST",
-          body: formData,
-          headers: {
-            // Add any required headers for Railway
-            'Accept': 'application/json',
-          }
-        });
-        
-        if (!imgRes.ok) {
-          throw new Error(`Image upload failed: ${imgRes.statusText}`);
-        }
-        
-        const imgData = await imgRes.json();
-        imageUrls = imgData.urls;
-      }
-
-      // 2. Upload video
-      let videoUrl = null;
+      const formData = new FormData();
+      mediaFiles.images.forEach(img => formData.append("images", img));
       if (mediaFiles.video) {
-        const formData = new FormData();
         formData.append("video", mediaFiles.video);
-        
-        const vidRes = await fetch("https://cast-solutions-webapp-production.up.railway.app/api/upload/video", {
-          method: "POST",
-          body: formData,
-          headers: {
-            'Accept': 'application/json',
-          }
-        });
-        
-        if (!vidRes.ok) {
-          throw new Error(`Video upload failed: ${vidRes.statusText}`);
-        }
-        
-        const vidData = await vidRes.json();
-        videoUrl = vidData.url;
       }
 
-      // 3. Save URLs to Firebase
+      const uploadRes = await fetch("https://cast-solutions-webapp-production.up.railway.app/upload", {
+        method: "POST",
+        body: formData,
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error(`Upload failed: ${uploadRes.statusText}`);
+      }
+
+      const uploadData = await uploadRes.json();
+      const imageUrls = uploadData.images || [];
+      const videoUrl = uploadData.video || null;
+
+      // Save URLs to Firebase
       const submissionRef = dbRef(database, `lists/${audition}/submissions/${submissionId}`);
       await update(submissionRef, {
         images: imageUrls,
