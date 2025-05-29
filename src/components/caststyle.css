@@ -35,7 +35,6 @@ body {
     width: 100%;
     max-width: 100vw;
     padding: 0;
-    overflow-x: hidden;
     text-align: center;
 }
 
@@ -45,9 +44,12 @@ body {
 }
 
 
-.audition-list {
+.audition-list,
+.audition-Registrations {
     padding: 1em;
 }
+
+
 
 .logo {
     max-width: 300px;
@@ -229,7 +231,7 @@ button[type="submit"] {
     transition: all 0.3s ease;
     font-size: 1.5rem; /* 24px */
     font-weight: 900;
-    padding-bottom: 50px;
+    padding-bottom: 20px;
 }
 
 .audition-container.expanded {
@@ -256,6 +258,64 @@ button[type="submit"] {
     width: 100%;
 }
 
+.audition-group {
+  margin-bottom: 2rem;
+  background: #2A2B38;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.audition-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #23242d;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.audition-table th,
+.audition-table td {
+  padding: 0.75rem 0.5rem;
+  text-align: left;
+  color: whitesmoke;
+  border-bottom: 1px solid #2A2B38;
+}
+
+.audition-table th {
+  background: #1E1F28;
+  color: whitesmoke;
+  font-weight: bold;
+  text-align: center;
+}
+
+.audition-table tr td {
+  border-bottom: none;
+  text-align: center;
+}
+
+.generate-number-btn {
+  background-color: #C52727;
+  color: whitesmoke;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 14px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.generate-number-btn:disabled {
+  background: #666;
+  color: #ccc;
+  cursor: not-allowed;
+}
+
 .submission-btn-options {
     display: flex;
     justify-content: space-between;
@@ -277,6 +337,7 @@ button[type="submit"] {
   padding: 5px 10px;
   border-radius: 5px;
   cursor: pointer;
+  width: 100%;
 }
 
 .filter-group label {
@@ -294,6 +355,8 @@ button[type="submit"] {
 
 .bottom-controls {
   display: flex;
+  justify-content: center;
+  align-items: center;
   flex-direction: column;
   gap: 20px;
   margin-top: 20px;
@@ -304,8 +367,9 @@ button[type="submit"] {
 
 .pagination-controls {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  width: 100%;
   gap: 20px;
 }
 
@@ -645,7 +709,6 @@ button[type="submit"] {
   width: 100%;
   background: #1E1F28;
   color: whitesmoke;
-  padding: 0.5rem;
   left: 0;
   bottom: 0;
   box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
@@ -659,14 +722,21 @@ button[type="submit"] {
 }
 
 .footer-logo {
-  height: 100px;
-  width: 250px;
+  height: 50px;
+  width: 150px;
   object-fit: contain;
 }
 
 .footer-text {
   font-size: 0.7rem;
   letter-spacing: 1px;
+}
+
+.footer-link {
+  color: #C52727;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 @media screen and (min-width: 1024px) {
@@ -677,9 +747,7 @@ button[type="submit"] {
         max-width: 2500px;
         margin: 0 auto;
         margin-top: 20px;
-        height: calc(100vh - 100px); 
-        overflow: hidden;
-        padding: 0; 
+        padding: 0px 1.25rem;
     }
 
     .banner {
@@ -698,8 +766,6 @@ button[type="submit"] {
     .audition-list {
         width: 100%;
         max-width: 1000px;
-        height: 100%;
-        overflow-y: auto; 
         padding-left: 0; 
         padding-right: 15px; 
         scrollbar-width: thin;

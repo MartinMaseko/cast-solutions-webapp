@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
 import Slider from "react-slick"; 
-import { ref, onValue, set, get, serverTimestamp } from "firebase/database";
+import { ref, onValue, set, get, serverTimestamp, update } from "firebase/database";
 import { database } from "../firebaseConfig";
 import Footer from "./Footer";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-
-import banner from "./assets/castsolutions-banner.png";
 import NavBar from './NavBar';
 
 const emptyStarIcon = "https://img.icons8.com/ios/35/c52727/star--v1.png";
@@ -81,7 +79,30 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedImage, setExpandedImage] = useState(null);
   const location = useLocation();
+  const [registrationSearch, setRegistrationSearch] = useState("");
+  const [allSubmissions, setAllSubmissions] = useState([]);
   
+
+  // Fetch all submissions once on mount
+  useEffect(() => {
+  const listsRef = ref(database, "lists");
+  const unsubscribe = onValue(listsRef, (snapshot) => {
+    const data = snapshot.val();
+    let all = [];
+    if (data) {
+      Object.entries(data).forEach(([listName, listData]) => {
+        if (listData.submissions) {
+          Object.entries(listData.submissions).forEach(([id, value]) => {
+            all.push({ id, ...value, audition: listName });
+          });
+        }
+      });
+    }
+    setAllSubmissions(all);
+  });
+  return () => unsubscribe();
+}, []);
+
 
   // Fetch lists from Firebase
   useEffect(() => {
@@ -125,6 +146,28 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
       }, 100);
     }
   }, [location.state]);
+
+  const handleGenerateNumber = async (audition, actorId) => {
+    const actorsInList = allSubmissions.filter(sub => sub.audition === audition);
+    const takenNumbers = actorsInList
+      .map(actor => actor.auditionNumber)
+      .filter(num => !!num)
+      .sort((a, b) => a - b);
+
+    let nextNumber = 1;
+    while (takenNumbers.includes(nextNumber)) {
+      nextNumber++;
+    }
+
+    const submissionRef = ref(database, `lists/${audition}/submissions/${actorId}`);
+    await update(submissionRef, { auditionNumber: nextNumber });
+  };
+
+  const filteredRegistrations = (actors) => {
+    return actors.filter(actor =>
+      (actor.name + " " + actor.surname).toLowerCase().includes(registrationSearch.toLowerCase())
+    );
+  };
 
   const handleCreateList = async () => {
     if (newListName.trim() === "") {
@@ -310,7 +353,63 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
 
       {/* Render Lists */}
       <div className="main-content">
-        <img src={banner} alt="Banner" className="banner" />
+          <div className="audition-Registrations">
+            <h3>Audition Registrations</h3>
+            <div className="search-container">
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search actor name or surname..."
+                value={registrationSearch}
+                onChange={e => setRegistrationSearch(e.target.value)}
+                style={{ marginBottom: "1rem" }}
+              />
+            </div>
+            {lists.map(audition => {
+              const actors = allSubmissions.filter(sub => sub.audition === audition);
+              const filteredActors = filteredRegistrations(actors);
+              if (filteredActors.length === 0) return null;
+              return (
+                <div key={audition} className="audition-group">
+                  <h4 style={{ color: "#C52727", margin: "1rem 0" }}>{audition}</h4>
+                  <div className="table-responsive">
+                    <table className="audition-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Name</th>
+                          <th>Surname</th>
+                          <th>Audition</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredActors.map((actor, idx) => (
+                          <tr key={actor.id}>
+                            <td>
+                              {actor.auditionNumber || ""}
+                            </td>
+                            <td>{actor.name}</td>
+                            <td>{actor.surname}</td>
+                            <td>{audition}</td>
+                            <td>
+                              <button
+                                className="generate-number-btn"
+                                onClick={() => handleGenerateNumber(audition, actor.id)}
+                                disabled={!!actor.auditionNumber}
+                              >
+                                {actor.auditionNumber ? "Number Given" : "Generate Number"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           <div className="audition-list">
             <h3>Auditions</h3>
             <div className="search-container">

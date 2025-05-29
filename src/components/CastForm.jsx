@@ -16,7 +16,6 @@ export default function FormPage({ lists = [] }) {
     ethnicity: "",
     contact: "",
     socialMedia: "",
-    actorNumber: "",
     agency: "",
     agencyEmail: "",
     height: "",
@@ -61,7 +60,6 @@ export default function FormPage({ lists = [] }) {
         ethnicity: formData.ethnicity,
         contact: formData.contact,
         socialMedia: formData.socialMedia,
-        actorNumber: formData.actorNumber,
         agency: formData.agency,
         agencyEmail: formData.agencyEmail,
         height: formData.height,
@@ -88,7 +86,6 @@ export default function FormPage({ lists = [] }) {
         ethnicity: "",
         contact: "",
         socialMedia: "",
-        actorNumber: "",
         agency: "",
         agencyEmail: "",
         height: "",
@@ -198,16 +195,6 @@ export default function FormPage({ lists = [] }) {
             name="socialMedia"
             value={formData.socialMedia}
             onChange={handleChange}
-          />
-        </h4>
-        <h4>
-          Actor Number:
-          <input
-            type="number"
-            name="actorNumber"
-            value={formData.actorNumber}
-            onChange={handleChange}
-            required
           />
         </h4>
         <h4>
