@@ -35,7 +35,6 @@ body {
     width: 100%;
     max-width: 100vw;
     padding: 0;
-    overflow-x: hidden;
     text-align: center;
 }
 
@@ -45,9 +44,12 @@ body {
 }
 
 
-.audition-list {
+.audition-list,
+.audition-Registrations {
     padding: 1em;
 }
+
+
 
 .logo {
     max-width: 300px;
@@ -185,19 +187,25 @@ button[type="submit"] {
 }
 
 .submission-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
     margin-top: 10px;
     padding-bottom: 20px;
     border-bottom: 1px solid #C52727;
     border-radius: 10px;
 }
 
-.submission-item p,
-.submission-item img,
-.submission-item video,
-.selected-detial p,
-.selected-detial img,
-.selected-detial video{
+.submission-item p{
     margin-top: 20px;
+    margin: 0 1rem 0 0;
+}
+
+.submission-btn-options {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0;
 }
 
 .createAudition-button {
@@ -211,6 +219,75 @@ button[type="submit"] {
     align-items: center;
     gap: 15px;
     width: 100%;
+}
+
+.media-upload-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #23242d;
+  color: whitesmoke;
+  padding: 2rem 2.5rem;
+  border-radius: 12px;
+  z-index: 2000;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  min-width: 320px;
+  max-width: 95vw;
+}
+
+.media-upload-modal h4 {
+  margin-bottom: 1rem;
+}
+
+.media-upload-modal input[type="file"] {
+  display: block;
+  margin-bottom: 1.5rem;
+  background: #2A2B38;
+  color: whitesmoke;
+  border-radius: 5px;
+  padding: 10px;
+  width: 100%;
+}
+
+.media-upload-modal input[type="file"]::file-selector-button {
+  background: #23242d;
+  color: whitesmoke;
+  border-radius: 5px;
+  padding: 10px;
+  font-weight: bold;
+  border: none;
+}
+
+.media-upload-modal input[type="file"]::file-selector-button:hover {
+  background: #C52727;
+  color: whitesmoke;
+}
+
+.media-upload-modal button {
+  min-width: 120px;
+  margin-right: 1rem;
+  margin-top: 0.5rem;
+  background: #C52727;
+  color: whitesmoke;
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.media-upload-modal button:last-child {
+  background: #1E1F28;
+  color: #C52727;
+  border: 1px solid #C52727;
+  margin-right: 0;
+}
+
+.media-upload-modal button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .audition-container {
@@ -229,7 +306,7 @@ button[type="submit"] {
     transition: all 0.3s ease;
     font-size: 1.5rem; /* 24px */
     font-weight: 900;
-    padding-bottom: 50px;
+    padding-bottom: 20px;
 }
 
 .audition-container.expanded {
@@ -256,6 +333,64 @@ button[type="submit"] {
     width: 100%;
 }
 
+.audition-group {
+  margin-bottom: 2rem;
+  background: #2A2B38;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.audition-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #23242d;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.audition-table th,
+.audition-table td {
+  padding: 0.75rem 0.5rem;
+  text-align: left;
+  color: whitesmoke;
+  border-bottom: 1px solid #2A2B38;
+}
+
+.audition-table th {
+  background: #1E1F28;
+  color: whitesmoke;
+  font-weight: bold;
+  text-align: center;
+}
+
+.audition-table tr td {
+  border-bottom: none;
+  text-align: center;
+}
+
+.generate-number-btn {
+  background-color: #C52727;
+  color: whitesmoke;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 14px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.generate-number-btn:disabled {
+  background: #666;
+  color: #ccc;
+  cursor: not-allowed;
+}
+
 .submission-btn-options {
     display: flex;
     justify-content: space-between;
@@ -277,6 +412,7 @@ button[type="submit"] {
   padding: 5px 10px;
   border-radius: 5px;
   cursor: pointer;
+  width: 100%;
 }
 
 .filter-group label {
@@ -294,6 +430,8 @@ button[type="submit"] {
 
 .bottom-controls {
   display: flex;
+  justify-content: center;
+  align-items: center;
   flex-direction: column;
   gap: 20px;
   margin-top: 20px;
@@ -304,8 +442,9 @@ button[type="submit"] {
 
 .pagination-controls {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  width: 100%;
   gap: 20px;
 }
 
@@ -561,91 +700,10 @@ button[type="submit"] {
   line-height: 1.6;
 }
 
-.image-slider {
-  position: relative;
-  margin: 2rem 0;
-  background-color: #2A2B38;
-  padding: 1.5rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.slider-container {
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  aspect-ratio: 16/9;
-  border-radius: 8px;
-}
-
-.slider-image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: none;
-  background-color: #1E1F28;
-}
-
-.slider-image.active {
-  display: block;
-}
-
-.slider-button {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: #C52727;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  opacity: 0.8;
-  transition: all 0.3s ease;
-}
-
-.slider-button:hover {
-  opacity: 1;
-  background-color: #C52727;
-}
-
-.prev-button {
-  left: 10px;
-}
-
-.next-button {
-  right: 10px;
-}
-
-.slider-dots {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 1rem;
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: #2A2B38;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.dot.active {
-  background-color: #C52727;
-}
-
 .app-footer {
   width: 100%;
   background: #1E1F28;
   color: whitesmoke;
-  padding: 0.5rem;
   left: 0;
   bottom: 0;
   box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
@@ -659,14 +717,21 @@ button[type="submit"] {
 }
 
 .footer-logo {
-  height: 100px;
-  width: 250px;
+  height: 50px;
+  width: 150px;
   object-fit: contain;
 }
 
 .footer-text {
   font-size: 0.7rem;
   letter-spacing: 1px;
+}
+
+.footer-link {
+  color: #C52727;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 @media screen and (min-width: 1024px) {
@@ -677,9 +742,7 @@ button[type="submit"] {
         max-width: 2500px;
         margin: 0 auto;
         margin-top: 20px;
-        height: calc(100vh - 100px); 
-        overflow: hidden;
-        padding: 0; 
+        padding: 0px 1.25rem;
     }
 
     .banner {
@@ -698,8 +761,6 @@ button[type="submit"] {
     .audition-list {
         width: 100%;
         max-width: 1000px;
-        height: 100%;
-        overflow-y: auto; 
         padding-left: 0; 
         padding-right: 15px; 
         scrollbar-width: thin;

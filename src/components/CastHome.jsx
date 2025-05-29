@@ -1,19 +1,15 @@
 import { useState, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
-import Slider from "react-slick"; 
-import { ref, onValue, set, get, serverTimestamp } from "firebase/database";
+import { ref as dbRef, onValue, set, get, serverTimestamp, update, remove } from "firebase/database";
 import { database } from "../firebaseConfig";
 import Footer from "./Footer";
+import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-
-import banner from "./assets/castsolutions-banner.png";
 import NavBar from './NavBar';
 
 const emptyStarIcon = "https://img.icons8.com/ios/35/c52727/star--v1.png";
 const filledStarIcon = "https://img.icons8.com/material-sharp/35/c52727/filled-star.png";
-
-const API_URL = process.env.REACT_APP_API_URL;
 
 /**
  * DetailsPage component for managing and displaying audition lists and their submissions.
@@ -74,18 +70,41 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const [newListName, setNewListName] = useState("");
   const [expandedList, setExpandedList] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [genderFilter, setGenderFilter] = useState('all');
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedImage, setExpandedImage] = useState(null);
   const location = useLocation();
+  const [registrationSearch, setRegistrationSearch] = useState("");
+  const [allSubmissions, setAllSubmissions] = useState([]);
+  const [mediaUploadId, setMediaUploadId] = useState(null); 
+  const [mediaFiles, setMediaFiles] = useState({ images: [], video: null });
+  const [uploading, setUploading] = useState(false);
   
+
+  // Fetch all submissions once on mount
+  useEffect(() => {
+  const listsRef = dbRef(database, "lists");
+  const unsubscribe = onValue(listsRef, (snapshot) => {
+    const data = snapshot.val();
+    let all = [];
+    if (data) {
+      Object.entries(data).forEach(([listName, listData]) => {
+        if (listData.submissions) {
+          Object.entries(listData.submissions).forEach(([id, value]) => {
+            all.push({ id, ...value, audition: listName });
+          });
+        }
+      });
+    }
+    setAllSubmissions(all);
+  });
+  return () => unsubscribe();
+}, []);
+
 
   // Fetch lists from Firebase
   useEffect(() => {
-    const listsRef = ref(database, "lists");
+    const listsRef = dbRef(database, "lists");
     const unsubscribe = onValue(listsRef, (snapshot) => {
       const data = snapshot.val();
       const listsArray = data ? Object.keys(data) : [];
@@ -98,7 +117,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   // Fetch submissions for the expanded list
   useEffect(() => {
     if (expandedList) {
-      const submissionsRef = ref(database, `lists/${expandedList}/submissions`);
+      const submissionsRef = dbRef(database, `lists/${expandedList}/submissions`);
       const unsubscribe = onValue(submissionsRef, (snapshot) => {
         const data = snapshot.val();
         const submissionsArray = data
@@ -126,6 +145,103 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
     }
   }, [location.state]);
 
+  useEffect(() => {
+    const favRef = dbRef(database, "favorites");
+    const unsubscribe = onValue(favRef, (snapshot) => {
+      const data = snapshot.val();
+      setFavorites(data ? Object.keys(data) : []);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleUploadMedia = async (submissionId, audition) => {
+    setUploading(true);
+    try {
+      // 1. Upload images
+      let imageUrls = [];
+      if (mediaFiles.images.length > 0) {
+        const formData = new FormData();
+        mediaFiles.images.forEach(img => formData.append("images", img));
+        
+        const imgRes = await fetch("https://cast-solutions-webapp-production.up.railway.app/api/upload/images", {
+          method: "POST",
+          body: formData,
+          headers: {
+            // Add any required headers for Railway
+            'Accept': 'application/json',
+          }
+        });
+        
+        if (!imgRes.ok) {
+          throw new Error(`Image upload failed: ${imgRes.statusText}`);
+        }
+        
+        const imgData = await imgRes.json();
+        imageUrls = imgData.urls;
+      }
+
+      // 2. Upload video
+      let videoUrl = null;
+      if (mediaFiles.video) {
+        const formData = new FormData();
+        formData.append("video", mediaFiles.video);
+        
+        const vidRes = await fetch("https://cast-solutions-webapp-production.up.railway.app/api/upload/video", {
+          method: "POST",
+          body: formData,
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+        
+        if (!vidRes.ok) {
+          throw new Error(`Video upload failed: ${vidRes.statusText}`);
+        }
+        
+        const vidData = await vidRes.json();
+        videoUrl = vidData.url;
+      }
+
+      // 3. Save URLs to Firebase
+      const submissionRef = dbRef(database, `lists/${audition}/submissions/${submissionId}`);
+      await update(submissionRef, {
+        images: imageUrls,
+        video: videoUrl,
+      });
+
+      setMediaUploadId(null);
+      setMediaFiles({ images: [], video: null });
+      alert("Media uploaded successfully!");
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert(`Upload failed: ${err.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleGenerateNumber = async (audition, actorId) => {
+    const actorsInList = allSubmissions.filter(sub => sub.audition === audition);
+    const takenNumbers = actorsInList
+      .map(actor => actor.auditionNumber)
+      .filter(num => !!num)
+      .sort((a, b) => a - b);
+
+    let nextNumber = 1;
+    while (takenNumbers.includes(nextNumber)) {
+      nextNumber++;
+    }
+
+    const submissionRef = dbRef(database, `lists/${audition}/submissions/${actorId}`);
+    await update(submissionRef, { auditionNumber: nextNumber });
+  };
+
+  const filteredRegistrations = (actors) => {
+    return actors.filter(actor =>
+      (actor.name + " " + actor.surname).toLowerCase().includes(registrationSearch.toLowerCase())
+    );
+  };
+
   const handleCreateList = async () => {
     if (newListName.trim() === "") {
       alert("List name cannot be empty.");
@@ -134,7 +250,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
 
     setIsLoading(true);
     try {
-      const listsRef = ref(database, `lists/${newListName}`);
+      const listsRef = dbRef(database, `lists/${newListName}`);
       
       // First check if list already exists
       const snapshot = await get(listsRef);
@@ -183,7 +299,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
     
     if (window.confirm('Are you sure you want to delete this submission?')) {
       try {
-        const submissionRef = ref(database, `lists/${expandedList}/submissions/${submissionId}`);
+        const submissionRef = dbRef(database, `lists/${expandedList}/submissions/${submissionId}`);
         await set(submissionRef, null);
         console.log('Submission deleted successfully');
       } catch (error) {
@@ -198,9 +314,12 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   };
 
   const toggleFavorite = (id) => {
+    const favRef = dbRef(database, `favorites/${id}`);
     if (favorites.includes(id)) {
+      remove(favRef);
       setFavorites(favorites.filter((favId) => favId !== id));
     } else {
+      set(favRef, true);
       setFavorites([...favorites, id]);
     }
   };
@@ -226,13 +345,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   };
 
   const getFilteredSubmissions = () => {
-    return submissions.filter(submission => {
-      const submissionGender = submission.gender ? submission.gender.toLowerCase() : '';
-      const filterGenderLower = genderFilter.toLowerCase();
-      const matchesGender = genderFilter === 'all' || submissionGender === filterGenderLower;
-      const matchesFavorites = !showFavoritesOnly || favorites.includes(submission.id);
-      return matchesGender && matchesFavorites;
-    });
+    return submissions.filter(submission => favorites.includes(submission.id));
   };
 
   const getPaginatedSubmissions = () => {
@@ -245,46 +358,8 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
     };
   };
 
-  // Slider settings
-  const sliderSettings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    arrows: false,
-  };
-
   return (
     <>
-      {expandedImage && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(30,31,40,0.95)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 3000
-          }}
-          onClick={() => setExpandedImage(null)}
-        >
-          <img
-            src={expandedImage}
-            alt="Expanded"
-            style={{
-              maxWidth: "90vw",
-              maxHeight: "90vh",
-              borderRadius: "12px",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
-            }}
-          />
-        </div>
-      )}
       
     <div className="details-page">
       <NavBar lists={lists} />
@@ -310,7 +385,72 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
 
       {/* Render Lists */}
       <div className="main-content">
-        <img src={banner} alt="Banner" className="banner" />
+          <div className="audition-Registrations">
+            <h3>Audition Registrations</h3>
+            <div className="search-container">
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search actor name or surname..."
+                value={registrationSearch}
+                onChange={e => setRegistrationSearch(e.target.value)}
+                style={{ marginBottom: "1rem" }}
+              />
+            </div>
+            {lists.map(audition => {
+              const actors = allSubmissions.filter(sub => sub.audition === audition);
+              const filteredActors = filteredRegistrations(actors);
+              if (filteredActors.length === 0) return null;
+              return (
+                <div key={audition} className="audition-group">
+                  <h4 style={{ color: "#C52727", margin: "1rem 0" }}>{audition}</h4>
+                  <div className="table-responsive">
+                    <table className="audition-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Name</th>
+                          <th>Surname</th>
+                          <th>Audition</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredActors.map((actor, idx) => (
+                          <tr key={actor.id}>
+                            <td>
+                              {actor.auditionNumber || ""}
+                            </td>
+                            <td>{actor.name}</td>
+                            <td>{actor.surname}</td>
+                            <td>{audition}</td>
+                            <td>
+                              <button
+                                className="generate-number-btn"
+                                onClick={() => handleGenerateNumber(audition, actor.id)}
+                                disabled={!!actor.auditionNumber}
+                              >
+                                {actor.auditionNumber ? "Number Given" : "Generate Number"}
+                              </button>
+                            </td>
+                            <td>
+                              <img
+                                className="favorite-icon"
+                                src={favorites.includes(actor.id) ? filledStarIcon : emptyStarIcon}
+                                alt={favorites.includes(actor.id) ? "Filled Star" : "Empty Star"}
+                                style={{ cursor: "pointer" }}
+                                onClick={() => toggleFavorite(actor.id)}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           <div className="audition-list">
             <h3>Auditions</h3>
             <div className="search-container">
@@ -424,43 +564,29 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                         <p>
                           <strong>Availability:</strong> {selectedDetail.availability}
                         </p>
-
-                        {/* Image Slider */}
                         {selectedDetail.images && selectedDetail.images.length > 0 && (
-                          <Slider {...sliderSettings}>
-                            {selectedDetail.images.map(
-                              (imageUrl, index) =>
-                                imageUrl && (
-                                  <div key={index}>
-                                    <img
-                                      src={`${API_URL}${imageUrl}`}
-                                      alt={`Uploaded ${index}`}
-                                      style={{
-                                        width: "100%",
-                                        height: "auto",
-                                        borderRadius: "10px",
-                                        cursor: "pointer"
-                                      }}
-                                      onClick={() => setExpandedImage(`${API_URL}${imageUrl}`)}
-                                    />
-                                  </div>
-                                )
-                            )}
+                          <Slider dots={true} infinite={false} speed={500} slidesToShow={1} slidesToScroll={1}>
+                            {selectedDetail.images.map((imgUrl, idx) => (
+                              <div key={idx}>
+                                <img
+                                  src={imgUrl}
+                                  alt={`Actor Media ${idx}`}
+                                  style={{ width: "100%", borderRadius: "10px", marginBottom: "1rem" }}
+                                />
+                              </div>
+                            ))}
                           </Slider>
                         )}
 
-                        {/* Video */}
                         {selectedDetail.video && (
                           <div style={{ marginTop: "20px" }}>
-                            <h4>Video:</h4>
                             <video
-                              src={`${API_URL}${selectedDetail.video}`}
+                              src={selectedDetail.video}
                               controls
                               style={{ width: "100%", borderRadius: "10px" }}
                             />
                           </div>
                         )}
-
                         <button onClick={handleBackToList} style={{ marginTop: "20px" }}>
                           Back to List
                         </button>
@@ -471,83 +597,29 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                     ) : (
                       // Render the full list of submissions with only name, surname, images, and videos
                       <div>
-                        <div className="filters-container">
-                          <div className="filter-group">
-                            <label>Gender: </label>
-                            <select 
-                              value={genderFilter} 
-                              onChange={(e) => setGenderFilter(e.target.value)}
-                              className="filter-select"
-                            >
-                              <option value="all">All</option>
-                              <option value="Male">Male</option>
-                              <option value="Female">Female</option>
-                            </select>
-                          </div>
-                          
-                          <div className="filter-group">
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={showFavoritesOnly}
-                                onChange={(e) => setShowFavoritesOnly(e.target.checked)}
-                              />
-                              Show Favorites Only
-                            </label>
-                          </div>
-                        </div>
-
                         {getFilteredSubmissions().map((submission, index) => (
                           <div
                             key={submission.id}
                             className="submission-item"
                           >
+                          <p>
+                            {submission.auditionNumber ? `#${submission.auditionNumber}` : ""}
+                          </p>
                             <p>
-                              <strong>Name:</strong> {submission.name}
+                              {submission.name}
                             </p>
                             <p>
-                              <strong>Surname:</strong> {submission.surname}
+                              {submission.surname}
                             </p>
-
-                            {/* Image Slider */}
-                            {submission.images && submission.images.length > 0 && (
-                              <Slider {...sliderSettings}>
-                                {submission.images.map(
-                                  (imageUrl, idx) =>
-                                    imageUrl && (
-                                      <div key={idx}>
-                                        <img
-                                          src={`${API_URL}${imageUrl}`}
-                                          alt={`Uploaded ${idx}`}
-                                          style={{
-                                            width: "100%",
-                                            height: "auto",
-                                            borderRadius: "10px",
-                                          }}
-                                        />
-                                      </div>
-                                    )
-                                )}
-                              </Slider>
-                            )}
-
-                            {/* Video */}
-                            {submission.video && (
-                              <div style={{ marginTop: "20px" }}>
-                                <h4>Video:</h4>
-                                <video
-                                  src={`${API_URL}${submission.video}`}
-                                  controls
-                                  style={{ width: "100%", borderRadius: "10px" }}
-                                />
-                              </div>
-                            )}
                             <div className="submission-btn-options">
                               <button
                                 onClick={() => handleViewDetail(index)}
                                 style={{ marginLeft: "10px" }}
                               >
                                 View Details
+                              </button>
+                              <button onClick={() => setMediaUploadId(submission.id)}>
+                                Add Media
                               </button>
                               <button
                                 onClick={() => handleDeleteSubmission(submission.id)}
@@ -564,7 +636,30 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                                 onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                               />
                             </div>
-
+                             {/* Media Upload Modal */}
+                              {mediaUploadId === submission.id && (
+                                <div className="media-upload-modal">
+                                  <h4>Upload Images</h4>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={e => setMediaFiles(prev => ({ ...prev, images: Array.from(e.target.files) }))}
+                                  />
+                                  <h4>Upload Audition Video</h4>
+                                  <input
+                                    type="file"
+                                    accept="video/*"
+                                    onChange={e => setMediaFiles(prev => ({ ...prev, video: e.target.files[0] }))}
+                                  />
+                                  <button onClick={() => handleUploadMedia(submission.id, expandedList)} disabled={uploading}>
+                                    {uploading ? "Uploading..." : "Upload"}
+                                  </button>
+                                  <button onClick={() => { setMediaUploadId(null); setMediaFiles({ images: [], video: null }); }}>
+                                    Cancel
+                                  </button>
+                                </div>
+                              )}
                           </div>
                         ))}
                         <div className="bottom-controls">
