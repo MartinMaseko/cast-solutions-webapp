@@ -187,19 +187,25 @@ button[type="submit"] {
 }
 
 .submission-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
     margin-top: 10px;
     padding-bottom: 20px;
     border-bottom: 1px solid #C52727;
     border-radius: 10px;
 }
 
-.submission-item p,
-.submission-item img,
-.submission-item video,
-.selected-detial p,
-.selected-detial img,
-.selected-detial video{
+.submission-item p{
     margin-top: 20px;
+    margin: 0 1rem 0 0;
+}
+
+.submission-btn-options {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0;
 }
 
 .createAudition-button {
@@ -623,86 +629,6 @@ button[type="submit"] {
 .content-box {
   margin-top: 1rem;
   line-height: 1.6;
-}
-
-.image-slider {
-  position: relative;
-  margin: 2rem 0;
-  background-color: #2A2B38;
-  padding: 1.5rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.slider-container {
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  aspect-ratio: 16/9;
-  border-radius: 8px;
-}
-
-.slider-image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: none;
-  background-color: #1E1F28;
-}
-
-.slider-image.active {
-  display: block;
-}
-
-.slider-button {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: #C52727;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  opacity: 0.8;
-  transition: all 0.3s ease;
-}
-
-.slider-button:hover {
-  opacity: 1;
-  background-color: #C52727;
-}
-
-.prev-button {
-  left: 10px;
-}
-
-.next-button {
-  right: 10px;
-}
-
-.slider-dots {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 1rem;
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: #2A2B38;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.dot.active {
-  background-color: #C52727;
 }
 
 .app-footer {

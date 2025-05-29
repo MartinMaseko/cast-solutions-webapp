@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
-import Slider from "react-slick"; 
-import { ref, onValue, set, get, serverTimestamp, update } from "firebase/database";
+import { ref, onValue, set, get, serverTimestamp, update, remove } from "firebase/database";
 import { database } from "../firebaseConfig";
 import Footer from "./Footer";
 import "slick-carousel/slick/slick.css";
@@ -10,8 +9,6 @@ import NavBar from './NavBar';
 
 const emptyStarIcon = "https://img.icons8.com/ios/35/c52727/star--v1.png";
 const filledStarIcon = "https://img.icons8.com/material-sharp/35/c52727/filled-star.png";
-
-const API_URL = process.env.REACT_APP_API_URL;
 
 /**
  * DetailsPage component for managing and displaying audition lists and their submissions.
@@ -72,12 +69,9 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const [newListName, setNewListName] = useState("");
   const [expandedList, setExpandedList] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [genderFilter, setGenderFilter] = useState('all');
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedImage, setExpandedImage] = useState(null);
   const location = useLocation();
   const [registrationSearch, setRegistrationSearch] = useState("");
   const [allSubmissions, setAllSubmissions] = useState([]);
@@ -146,6 +140,15 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
       }, 100);
     }
   }, [location.state]);
+
+  useEffect(() => {
+    const favRef = ref(database, "favorites");
+    const unsubscribe = onValue(favRef, (snapshot) => {
+      const data = snapshot.val();
+      setFavorites(data ? Object.keys(data) : []);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleGenerateNumber = async (audition, actorId) => {
     const actorsInList = allSubmissions.filter(sub => sub.audition === audition);
@@ -241,9 +244,12 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   };
 
   const toggleFavorite = (id) => {
+    const favRef = ref(database, `favorites/${id}`);
     if (favorites.includes(id)) {
+      remove(favRef);
       setFavorites(favorites.filter((favId) => favId !== id));
     } else {
+      set(favRef, true);
       setFavorites([...favorites, id]);
     }
   };
@@ -269,13 +275,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   };
 
   const getFilteredSubmissions = () => {
-    return submissions.filter(submission => {
-      const submissionGender = submission.gender ? submission.gender.toLowerCase() : '';
-      const filterGenderLower = genderFilter.toLowerCase();
-      const matchesGender = genderFilter === 'all' || submissionGender === filterGenderLower;
-      const matchesFavorites = !showFavoritesOnly || favorites.includes(submission.id);
-      return matchesGender && matchesFavorites;
-    });
+    return submissions.filter(submission => favorites.includes(submission.id));
   };
 
   const getPaginatedSubmissions = () => {
@@ -288,46 +288,8 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
     };
   };
 
-  // Slider settings
-  const sliderSettings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    arrows: false,
-  };
-
   return (
     <>
-      {expandedImage && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(30,31,40,0.95)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 3000
-          }}
-          onClick={() => setExpandedImage(null)}
-        >
-          <img
-            src={expandedImage}
-            alt="Expanded"
-            style={{
-              maxWidth: "90vw",
-              maxHeight: "90vh",
-              borderRadius: "12px",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
-            }}
-          />
-        </div>
-      )}
       
     <div className="details-page">
       <NavBar lists={lists} />
@@ -400,6 +362,15 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                               >
                                 {actor.auditionNumber ? "Number Given" : "Generate Number"}
                               </button>
+                            </td>
+                            <td>
+                              <img
+                                className="favorite-icon"
+                                src={favorites.includes(actor.id) ? filledStarIcon : emptyStarIcon}
+                                alt={favorites.includes(actor.id) ? "Filled Star" : "Empty Star"}
+                                style={{ cursor: "pointer" }}
+                                onClick={() => toggleFavorite(actor.id)}
+                              />
                             </td>
                           </tr>
                         ))}
@@ -523,43 +494,6 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                         <p>
                           <strong>Availability:</strong> {selectedDetail.availability}
                         </p>
-
-                        {/* Image Slider */}
-                        {selectedDetail.images && selectedDetail.images.length > 0 && (
-                          <Slider {...sliderSettings}>
-                            {selectedDetail.images.map(
-                              (imageUrl, index) =>
-                                imageUrl && (
-                                  <div key={index}>
-                                    <img
-                                      src={`${API_URL}${imageUrl}`}
-                                      alt={`Uploaded ${index}`}
-                                      style={{
-                                        width: "100%",
-                                        height: "auto",
-                                        borderRadius: "10px",
-                                        cursor: "pointer"
-                                      }}
-                                      onClick={() => setExpandedImage(`${API_URL}${imageUrl}`)}
-                                    />
-                                  </div>
-                                )
-                            )}
-                          </Slider>
-                        )}
-
-                        {/* Video */}
-                        {selectedDetail.video && (
-                          <div style={{ marginTop: "20px" }}>
-                            <h4>Video:</h4>
-                            <video
-                              src={`${API_URL}${selectedDetail.video}`}
-                              controls
-                              style={{ width: "100%", borderRadius: "10px" }}
-                            />
-                          </div>
-                        )}
-
                         <button onClick={handleBackToList} style={{ marginTop: "20px" }}>
                           Back to List
                         </button>
@@ -570,32 +504,6 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                     ) : (
                       // Render the full list of submissions with only name, surname, images, and videos
                       <div>
-                        <div className="filters-container">
-                          <div className="filter-group">
-                            <label>Gender: </label>
-                            <select 
-                              value={genderFilter} 
-                              onChange={(e) => setGenderFilter(e.target.value)}
-                              className="filter-select"
-                            >
-                              <option value="all">All</option>
-                              <option value="Male">Male</option>
-                              <option value="Female">Female</option>
-                            </select>
-                          </div>
-                          
-                          <div className="filter-group">
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={showFavoritesOnly}
-                                onChange={(e) => setShowFavoritesOnly(e.target.checked)}
-                              />
-                              Show Favorites Only
-                            </label>
-                          </div>
-                        </div>
-
                         {getFilteredSubmissions().map((submission, index) => (
                           <div
                             key={submission.id}
@@ -607,40 +515,6 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                             <p>
                               <strong>Surname:</strong> {submission.surname}
                             </p>
-
-                            {/* Image Slider */}
-                            {submission.images && submission.images.length > 0 && (
-                              <Slider {...sliderSettings}>
-                                {submission.images.map(
-                                  (imageUrl, idx) =>
-                                    imageUrl && (
-                                      <div key={idx}>
-                                        <img
-                                          src={`${API_URL}${imageUrl}`}
-                                          alt={`Uploaded ${idx}`}
-                                          style={{
-                                            width: "100%",
-                                            height: "auto",
-                                            borderRadius: "10px",
-                                          }}
-                                        />
-                                      </div>
-                                    )
-                                )}
-                              </Slider>
-                            )}
-
-                            {/* Video */}
-                            {submission.video && (
-                              <div style={{ marginTop: "20px" }}>
-                                <h4>Video:</h4>
-                                <video
-                                  src={`${API_URL}${submission.video}`}
-                                  controls
-                                  style={{ width: "100%", borderRadius: "10px" }}
-                                />
-                              </div>
-                            )}
                             <div className="submission-btn-options">
                               <button
                                 onClick={() => handleViewDetail(index)}
