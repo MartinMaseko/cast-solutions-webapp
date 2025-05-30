@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { ref, onValue, set } from "firebase/database";
+import { ref, onValue, set, remove } from "firebase/database";
 import { database, auth } from "./firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import Login from './components/Login';
@@ -9,6 +9,7 @@ import CastHome from "./components/CastHome";
 import DetailPage from "./components/DetialPage";
 import BriefDetails from "./components/BriefDetails";
 import CreateBrief from "./components/CreateBrief";
+import Presentation from './components/Presentation';
 import spinner from './components/assets/spinner.gif';
 
 /**
@@ -101,19 +102,24 @@ function App() {
   };
 
   const clearSubmissions = async (listName) => {
-  if (!listName) return;
+    if (!listName) return;
 
-  if (window.confirm(`Are you sure you want to clear all submissions from "${listName}"?`)) {
-    try {
-      const listRef = ref(database, `lists/${listName}/submissions`);
-      await set(listRef, null);
-      console.log(`All submissions cleared from ${listName}`);
-    } catch (error) {
-      console.error('Error clearing submissions:', error);
-      alert('Failed to clear submissions. Please try again.');
+    if (window.confirm(`Are you sure you want to delete the entire list "${listName}" and all its submissions?`)) {
+      try {
+        // Delete the list and its submissions
+        const listRef = ref(database, `lists/${listName}`);
+        await set(listRef, null);
+
+        const favRef = ref(database, `favorites/${listName}`);
+        await remove(favRef);
+
+        console.log(`List "${listName}" and all its submissions and favorites deleted`);
+      } catch (error) {
+        console.error('Error deleting list or favorites:', error);
+        alert('Failed to delete list or favorites. Please try again.');
+      }
     }
-  }
-};
+  };
 
   return (
     <Router>
@@ -144,6 +150,7 @@ function App() {
           element={<DetailPage submissions={submissions} />}
         />
         <Route path="/brief/:id" element={<BriefDetails />} />
+        <Route path="/presentation/:listName" element={<Presentation />} />
       </Routes>
     </Router>
   );

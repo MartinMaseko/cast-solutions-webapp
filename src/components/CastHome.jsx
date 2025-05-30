@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ref as dbRef, onValue, set, get, serverTimestamp, update, remove } from "firebase/database";
 import { database } from "../firebaseConfig";
 import Footer from "./Footer";
@@ -70,8 +70,6 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const [newListName, setNewListName] = useState("");
   const [expandedList, setExpandedList] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const location = useLocation();
   const [registrationSearch, setRegistrationSearch] = useState("");
@@ -79,6 +77,8 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const [mediaUploadId, setMediaUploadId] = useState(null); 
   const [mediaFiles, setMediaFiles] = useState({ images: [], video: null });
   const [uploading, setUploading] = useState(false);
+
+  const navigate = useNavigate();
   
 
   // Fetch all submissions once on mount
@@ -263,9 +263,9 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
     setSelectedDetail(null); // Reset selected detail when switching lists
   };
 
-  const handleViewDetail = (index) => {
-    setSelectedDetail(submissions[index]);
-      document.querySelector('.audition-list').scrollTo({
+  const handleViewDetail = (submission) => {
+    setSelectedDetail(submission);
+    document.querySelector('.audition-list').scrollTo({
       top: 0,
       behavior: 'smooth'
     });
@@ -273,16 +273,13 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
 
   const handleDeleteSubmission = async (submissionId) => {
     if (!expandedList || !submissionId) return;
-    
-    if (window.confirm('Are you sure you want to delete this submission?')) {
-      try {
-        const submissionRef = dbRef(database, `lists/${expandedList}/submissions/${submissionId}`);
-        await set(submissionRef, null);
-        console.log('Submission deleted successfully');
-      } catch (error) {
-        console.error('Error deleting submission:', error);
-        alert('Failed to delete submission. Please try again.');
-      }
+    try {
+      const submissionRef = dbRef(database, `lists/${expandedList}/submissions/${submissionId}`);
+      await set(submissionRef, null);
+      console.log('Submission deleted successfully');
+    } catch (error) {
+      console.error('Error deleting submission:', error);
+      alert('Failed to delete submission. Please try again.');
     }
   };
 
@@ -323,16 +320,6 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
 
   const getFilteredSubmissions = () => {
     return submissions.filter(submission => favorites.includes(submission.id));
-  };
-
-  const getPaginatedSubmissions = () => {
-    const filtered = getFilteredSubmissions();
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return {
-      submissions: filtered.slice(startIndex, endIndex),
-      totalPages: Math.ceil(filtered.length / itemsPerPage)
-    };
   };
 
   return (
@@ -573,7 +560,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                       </div>
                     ) : (
                       // Render the full list of submissions with only name, surname, images, and videos
-                      <div>
+                      <div className="favorite-list">
                         {getFilteredSubmissions().map((submission, index) => (
                           <div
                             key={submission.id}
@@ -590,7 +577,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                             </p>
                             <div className="submission-btn-options">
                               <button
-                                onClick={() => handleViewDetail(index)}
+                                onClick={() => handleViewDetail(submission)}
                                 style={{ marginLeft: "10px" }}
                               >
                                 View Details
@@ -599,7 +586,11 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                                 Add Media
                               </button>
                               <button
-                                onClick={() => handleDeleteSubmission(submission.id)}
+                                onClick={() => {
+                                  if (window.confirm('Are you sure you want to delete this submission?')) {
+                                    handleDeleteSubmission(submission.id);
+                                  }
+                                }}
                                 className="delete-button"
                               >
                                 Delete
@@ -640,47 +631,26 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                           </div>
                         ))}
                         <div className="bottom-controls">
-                          <select
-                              value={itemsPerPage}
-                              onChange={(e) => {
-                                setItemsPerPage(Number(e.target.value));
-                                setCurrentPage(1);
-                              }}
-                              className="filter-select"
-                            >
-                              <option value={10}>10 per page</option>
-                              <option value={20}>20 per page</option>
-                            </select>
-                          <div className="pagination-controls">
-                            <div className="page-buttons">
-                              <button
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                                className="pagination-button"
-                              >
-                                Previous
-                              </button>
-                              <span className="page-info">
-                                Page {currentPage} of {getPaginatedSubmissions().totalPages}
-                              </span>
-                              <button
-                                onClick={() => setCurrentPage(prev => 
-                                  Math.min(prev + 1, getPaginatedSubmissions().totalPages)
-                                )}
-                                disabled={currentPage === getPaginatedSubmissions().totalPages}
-                                className="pagination-button"
-                              >
-                                Next
-                              </button>
-                            </div>
-                          </div>
-
-                          <button 
-                            onClick={() => clearSubmissions(expandedList)} 
-                            className="clear-button"
+                          <button
+                            className="create-presentation-button"
+                            onClick={() => {
+                              // Get favorite submissions for this list
+                              const favsForList = submissions.filter(sub => favorites.includes(sub.id));
+                              navigate(`/presentation/${expandedList}`, { state: { favorites: favsForList } });
+                            }}
                           >
-                            Clear {expandedList} Submissions
+                            Create Presentation
                           </button>
+                          <button
+                          onClick={() => {
+                            if (window.confirm(`Are you sure you want to clear all submissions for ${expandedList}?`)) {
+                              clearSubmissions(expandedList);
+                            }
+                          }}
+                          className="clear-button"
+                        >
+                          Clear {expandedList} Submissions
+                        </button>
                         </div>
                       </div>
                     )}
