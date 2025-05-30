@@ -205,9 +205,11 @@ button[type="submit"] {
 
 .submission-btn-options {
     display: flex;
+    justify-content: flex-end;
     align-items: center;
     gap: 1rem;
     margin-top: 0;
+    width: 100%;
 }
 
 .audition-lists {

@@ -394,7 +394,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                                 onClick={() => handleGenerateNumber(audition, actor.id)}
                                 disabled={!!actor.auditionNumber}
                               >
-                                {actor.auditionNumber ? "Number Given" : "Generate Number"}
+                                {actor.auditionNumber ? "Allocated" : "Generate Number"}
                               </button>
                             </td>
                             <td>
