@@ -32,6 +32,9 @@ export default function Presentation() {
     <div className="details-page presentation-page">
       <img src={logo} alt="Logo" className="logo presentation-logo" />
       <h2 className="presentation-title">Shortlisted Actors: {listName}</h2>
+      <h3 className="company-title">Cast Solutions</h3>
+      <h4 className="company-number"> 082 323 4569</h4>
+      <h4 className="company-email">info@castsolutions.com</h4>
       <div className="presentation-list">
         {favorites.length === 0 && (
           <p className="presentation-empty">No favorites selected for this list.</p>
@@ -143,6 +146,25 @@ export default function Presentation() {
           ))
         )}
       </div>
+      <div style={{ display: "flex", justifyContent: "center", margin: "2rem 0" }}>
+        <button
+          className="presentation-share-btn"
+          onClick={() => {
+            const url = window.location.href;
+            if (navigator.share) {
+              navigator.share({
+                title: `Shortlisted Actors: ${listName}`,
+                url,
+              });
+            } else {
+              navigator.clipboard.writeText(url);
+              alert("Presentation link copied to clipboard!");
+            }
+          }}
+        >
+          Share Presentation
+        </button>
+    </div>
     </div>
   );
 }
