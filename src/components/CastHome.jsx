@@ -442,7 +442,7 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                   <div>
                     {selectedDetail ? (
                       // Render the selected detail
-                      <div className="selected-detial">
+                      <div className="selected-detail">
                         <p>
                           <strong>Name:</strong> {selectedDetail.name}
                         </p>
@@ -529,17 +529,26 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                           <strong>Availability:</strong> {selectedDetail.availability}
                         </p>
                         {selectedDetail.images && selectedDetail.images.length > 0 && (
-                          <Slider dots={true} infinite={false} speed={500} slidesToShow={1} slidesToScroll={1}>
-                            {selectedDetail.images.map((imgUrl, idx) => (
-                              <div key={idx}>
-                                <img
-                                  src={imgUrl}
-                                  alt={`Actor Media ${idx}`}
-                                  style={{ width: "100%", borderRadius: "10px", marginBottom: "1rem" }}
-                                />
-                              </div>
-                            ))}
-                          </Slider>
+                          <div className="media-slider-wrapper">
+                            <Slider
+                              dots={true}
+                              arrows={false}
+                              infinite={false}
+                              speed={500}
+                              slidesToShow={1}
+                              slidesToScroll={1}
+                            >
+                              {selectedDetail.images.map((imgUrl, idx) => (
+                                <div key={idx}>
+                                  <img
+                                    src={imgUrl}
+                                    alt={`Actor Media ${idx}`}
+                                    className="detail-image"
+                                  />
+                                </div>
+                              ))}
+                            </Slider>
+                          </div>
                         )}
 
                         {selectedDetail.video && (
@@ -547,16 +556,18 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                             <video
                               src={selectedDetail.video}
                               controls
-                              style={{ width: "100%", borderRadius: "10px" }}
+                              className="detail-video"
                             />
                           </div>
                         )}
-                        <button onClick={handleBackToList} style={{ marginTop: "20px" }}>
-                          Back to List
-                        </button>
-                        <button onClick={() => handleShare(selectedDetail.id)} style={{ marginLeft: "10px" }}>
-                          Share
-                        </button>
+                        <div className="detail-actions">
+                          <button onClick={handleBackToList} style={{ marginTop: "20px" }}>
+                            Back to List
+                          </button>
+                          <button onClick={() => handleShare(selectedDetail.id)} style={{ marginLeft: "10px" }}>
+                            Share
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       // Render the full list of submissions with only name, surname, images, and videos
@@ -566,15 +577,17 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                             key={submission.id}
                             className="submission-item"
                           >
-                          <p>
-                            {submission.auditionNumber ? `#${submission.auditionNumber}` : ""}
-                          </p>
-                            <p>
-                              {submission.name}
-                            </p>
-                            <p>
-                              {submission.surname}
-                            </p>
+                            <div className="submission-info">
+                              <p>
+                                {submission.auditionNumber ? `#${submission.auditionNumber}` : ""}
+                              </p>
+                                <p>
+                                  {submission.name}
+                                </p>
+                                <p>
+                                  {submission.surname}
+                                </p>
+                            </div>
                             <div className="submission-btn-options">
                               <button
                                 onClick={() => handleViewDetail(submission)}
