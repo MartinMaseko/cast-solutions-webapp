@@ -184,6 +184,8 @@ button[type="submit"] {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    padding: 1rem;
+    gap: 1rem;
 }
 
 .submission-item {
@@ -203,13 +205,11 @@ button[type="submit"] {
 
 .submission-btn-options {
     display: flex;
+    justify-content: flex-end;
     align-items: center;
     gap: 1rem;
     margin-top: 0;
-}
-
-.createAudition-button {
-    margin-top: 20px;
+    width: 100%;
 }
 
 .audition-lists {
@@ -461,6 +461,93 @@ button[type="submit"] {
   max-width: 100%;
 }
 
+/* Presentation page styles */
+.presentation-page {
+  min-height: 100vh;
+  padding: 2rem;
+  background: #23242d;
+}
+
+.presentation-logo {
+  display: block;
+  margin: 2rem auto;
+  width: 200px;
+}
+
+.presentation-title {
+  color: whitesmoke;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.presentation-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.presentation-empty {
+  color: #C52727;
+  font-weight: bold;
+  text-align: center;
+}
+
+.presentation-card {
+  background: #2A2B38;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  padding: 2rem;
+  color: whitesmoke;
+  min-width: 320px;
+  max-width: 400px;
+  margin: 1rem 0;
+}
+
+.presentation-actor-name {
+  color: #C52727;
+  margin-bottom: 1rem;
+}
+
+.presentation-actor-info {
+  margin-bottom: 0.5rem;
+}
+
+.presentation-images {
+  margin: 1rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.presentation-image {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #23242d;
+}
+
+.presentation-slider {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.presentation-video-wrapper {
+  margin-top: 1rem;
+  padding-top: 10px;
+}
+
+.presentation-video {
+  width: 100%;
+  border-radius: 10px;
+  background: #000;
+}
+
 .pagination-button {
   background-color: #C52727;
   color: whitesmoke;
@@ -516,6 +603,10 @@ button[type="submit"] {
   font-size: 1rem;
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.audition-input {
+  margin: 0px 10px;
 }
 
 .search-input:focus {
@@ -766,6 +857,10 @@ button[type="submit"] {
         scrollbar-width: thin;
         scrollbar-color: #C52727 #2A2B38;
         margin: 0; 
+    }
+
+    .list-management {
+        gap: 0.2rem;
     }
 
     .audition-container.expanded > div {
