@@ -7,7 +7,7 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS setup using environment variable or sensible defaults
+// Dynamic CORS setup
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',')
   : ['http://localhost:3000', 'https://cast-solutions.netlify.app'];
@@ -24,22 +24,16 @@ if (!fs.existsSync(uploadDir)) {
 
 // Multer storage config
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 });
 const upload = multer({ storage });
 
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Helper to get the base URL for file links
 const getBaseUrl = () => process.env.APP_URL || `http://localhost:${PORT}`;
 
-// Upload endpoint
 app.post("/upload", upload.fields([{ name: "images" }, { name: "video" }]), (req, res) => {
   const files = req.files;
   const baseUrl = getBaseUrl();
@@ -50,7 +44,6 @@ app.post("/upload", upload.fields([{ name: "images" }, { name: "video" }]), (req
   res.status(200).json(response);
 });
 
-// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on ${getBaseUrl()}`);
 });
