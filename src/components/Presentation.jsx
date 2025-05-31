@@ -24,26 +24,32 @@ export default function Presentation() {
   const [selectedDetail, setSelectedDetail] = useState(null);
 
   useEffect(() => {
-    // Only fetch if not coming from navigation
-    if (!location.state?.favorites) {
-      (async () => {
+    const fetchPresentation = async () => {
+      try {
         setLoading(true);
-        // 1. Get all favorite IDs
-        const favSnapshot = await get(dbRef(database, "favorites"));
-        const favIds = favSnapshot.exists() ? Object.keys(favSnapshot.val()) : [];
-
-        // 2. Get all submissions for this list
-        const subsSnapshot = await get(dbRef(database, `lists/${listName}/submissions`));
-        const allSubs = subsSnapshot.exists() ? subsSnapshot.val() : {};
-
-        // 3. Filter submissions to only those in favorites
-        const favActors = Object.entries(allSubs)
-          .filter(([id]) => favIds.includes(id))
-          .map(([id, data]) => ({ id, ...data }));
-
-        setFavorites(favActors);
+        
+        // Get presentation data including favorites
+        const presentationRef = dbRef(database, `presentations/${listName}`);
+        const presentationSnap = await get(presentationRef);
+        
+        if (presentationSnap.exists()) {
+          const presentationData = presentationSnap.val();
+          setFavorites(presentationData.favorites || []);
+        } else {
+          console.log("No presentation found");
+          setFavorites([]);
+        }
+      } catch (error) {
+        console.error("Error fetching presentation:", error);
+        setFavorites([]);
+      } finally {
         setLoading(false);
-      })();
+      }
+    };
+
+    // Only fetch from Firebase if we don't have favorites in location.state
+    if (!location.state?.favorites) {
+      fetchPresentation();
     }
   }, [listName, location.state]);
 
