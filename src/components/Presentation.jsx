@@ -1,4 +1,4 @@
-import { useLocation, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ref as dbRef, get } from "firebase/database";
 import { database } from "../firebaseConfig";
