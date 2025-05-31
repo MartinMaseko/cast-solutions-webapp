@@ -27,16 +27,44 @@ export default function Presentation() {
       try {
         setLoading(true);
         
-        // Get presentation data including favorites
+        // First, try to get the presentation data
         const presentationRef = dbRef(database, `presentations/${listName}`);
         const presentationSnap = await get(presentationRef);
         
         if (presentationSnap.exists()) {
           const presentationData = presentationSnap.val();
-          setFavorites(presentationData.favorites || []);
+          
+          // Get the favorites from presentation data
+          const favoriteActors = presentationData.favorites || [];
+          
+          // If we have valid favorites data, use it
+          if (Array.isArray(favoriteActors) && favoriteActors.length > 0) {
+            setFavorites(favoriteActors);
+          } else {
+            console.log("No favorites found in presentation");
+            setFavorites([]);
+          }
         } else {
-          console.log("No presentation found");
-          setFavorites([]);
+          // Fallback: Try to get data from lists and favorites
+          const listsRef = dbRef(database, `lists/${listName}/submissions`);
+          const favsRef = dbRef(database, 'favorites');
+          
+          const [subsSnap, favsSnap] = await Promise.all([
+            get(listsRef),
+            get(favsRef)
+          ]);
+
+          const submissions = subsSnap.val() || {};
+          const favIds = favsSnap.val() ? Object.keys(favsSnap.val()) : [];
+
+          const favoriteActors = Object.entries(submissions)
+            .filter(([id]) => favIds.includes(id))
+            .map(([id, data]) => ({
+              id,
+              ...data
+            }));
+
+          setFavorites(favoriteActors);
         }
       } catch (error) {
         console.error("Error fetching presentation:", error);
@@ -46,11 +74,8 @@ export default function Presentation() {
       }
     };
 
-    // Only fetch from Firebase if we don't have favorites in location.state
-    if (!location.state?.favorites) {
-      fetchPresentation();
-    }
-  }, [listName, location.state]);
+    fetchPresentation();
+  }, [listName]);
 
   const handleViewDetail = (actor) => {
     setSelectedDetail(actor);
