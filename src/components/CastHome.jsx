@@ -648,26 +648,23 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                             className="create-presentation-button"
                             onClick={async () => {
                               try {
-                                // Get all submissions that are favorites
+                                // Get favorite submissions for this list
                                 const favsForList = submissions.filter(sub => favorites.includes(sub.id));
                                 
-                                if (favsForList.length === 0) {
-                                  alert("Please select at least one favorite actor before creating a presentation.");
-                                  return;
-                                }
-
-                                // Store full presentation data including actor details
+                                // Store presentation data with full actor details
                                 await set(dbRef(database, `presentations/${expandedList}`), {
-                                  favorites: favsForList,
+                                  favorites: favsForList, // Store full actor objects, not just IDs
                                   createdAt: serverTimestamp(),
                                   listName: expandedList
                                 });
 
-                                // Navigate to presentation with the list name
-                                navigate(`/presentation/${expandedList}`);
+                                // Navigate with the same data
+                                navigate(`/presentation/${expandedList}`, { 
+                                  state: { favorites: favsForList }
+                                });
                               } catch (error) {
                                 console.error("Error creating presentation:", error);
-                                alert("Failed to create presentation. Please try again.");
+                                alert("Failed to create presentation");
                               }
                             }}
                           >

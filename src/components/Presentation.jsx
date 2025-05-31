@@ -23,33 +23,34 @@ export default function Presentation() {
   const [selectedDetail, setSelectedDetail] = useState(null);
 
   useEffect(() => {
-    const fetchPresentationData = async () => {
+    const fetchPresentation = async () => {
       try {
         setLoading(true);
         
-        // Get presentation data
-        const presentationSnapshot = await get(dbRef(database, `presentations/${listName}`));
+        // Get presentation data including favorites
+        const presentationRef = dbRef(database, `presentations/${listName}`);
+        const presentationSnap = await get(presentationRef);
         
-        if (!presentationSnapshot.exists()) {
-          console.error("Presentation not found");
+        if (presentationSnap.exists()) {
+          const presentationData = presentationSnap.val();
+          setFavorites(presentationData.favorites || []);
+        } else {
+          console.log("No presentation found");
           setFavorites([]);
-          return;
         }
-
-        const presentationData = presentationSnapshot.val();
-        
-        // Use the stored favorites from the presentation
-        setFavorites(presentationData.favorites || []);
-        
       } catch (error) {
         console.error("Error fetching presentation:", error);
+        setFavorites([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPresentationData();
-  }, [listName]);
+    // Only fetch from Firebase if we don't have favorites in location.state
+    if (!location.state?.favorites) {
+      fetchPresentation();
+    }
+  }, [listName, location.state]);
 
   const handleViewDetail = (actor) => {
     setSelectedDetail(actor);
