@@ -1,9 +1,12 @@
 import { useLocation, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { ref as dbRef, get } from "firebase/database";
+import { database } from "../firebaseConfig";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import logo from "./assets/logo.png";
+import spinner from './assets/spinner.gif';
 
 function isImage(url) {
   return /\.(jpe?g|png|gif|bmp|webp)$/i.test(url);
@@ -16,8 +19,33 @@ function isVideo(url) {
 export default function Presentation() {
   const { listName } = useParams();
   const location = useLocation();
-  const favorites = location.state?.favorites || [];
+  const [favorites, setFavorites] = useState(location.state?.favorites || []);
+  const [loading, setLoading] = useState(!location.state?.favorites);
   const [selectedDetail, setSelectedDetail] = useState(null);
+
+  useEffect(() => {
+    // Only fetch if not coming from navigation
+    if (!location.state?.favorites) {
+      (async () => {
+        setLoading(true);
+        // 1. Get all favorite IDs
+        const favSnapshot = await get(dbRef(database, "favorites"));
+        const favIds = favSnapshot.exists() ? Object.keys(favSnapshot.val()) : [];
+
+        // 2. Get all submissions for this list
+        const subsSnapshot = await get(dbRef(database, `lists/${listName}/submissions`));
+        const allSubs = subsSnapshot.exists() ? subsSnapshot.val() : {};
+
+        // 3. Filter submissions to only those in favorites
+        const favActors = Object.entries(allSubs)
+          .filter(([id]) => favIds.includes(id))
+          .map(([id, data]) => ({ id, ...data }));
+
+        setFavorites(favActors);
+        setLoading(false);
+      })();
+    }
+  }, [listName, location.state]);
 
   const handleViewDetail = (actor) => {
     setSelectedDetail(actor);
@@ -27,6 +55,12 @@ export default function Presentation() {
   const handleBackToList = () => {
     setSelectedDetail(null);
   };
+
+  if (loading) return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "40vh" }}>
+      <img src={spinner} alt="Loading..." style={{ width: 60, height: 60 }} />
+    </div>
+  );
 
   return (
     <div className="details-page presentation-page">
