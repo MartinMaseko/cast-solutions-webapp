@@ -83,23 +83,23 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
 
   // Fetch all submissions once on mount
   useEffect(() => {
-  const listsRef = dbRef(database, "lists");
-  const unsubscribe = onValue(listsRef, (snapshot) => {
-    const data = snapshot.val();
-    let all = [];
-    if (data) {
-      Object.entries(data).forEach(([listName, listData]) => {
-        if (listData.submissions) {
-          Object.entries(listData.submissions).forEach(([id, value]) => {
-            all.push({ id, ...value, audition: listName });
-          });
-        }
-      });
-    }
-    setAllSubmissions(all);
-  });
-  return () => unsubscribe();
-}, []);
+    const listsRef = dbRef(database, "lists");
+    const unsubscribe = onValue(listsRef, (snapshot) => {
+      const data = snapshot.val();
+      let all = [];
+      if (data) {
+        Object.entries(data).forEach(([listName, listData]) => {
+          if (listData.submissions) {
+            Object.entries(listData.submissions).forEach(([id, value]) => {
+              all.push({ id, ...value, audition: listName });
+            });
+          }
+        });
+      }
+      setAllSubmissions(all);
+    });
+    return () => unsubscribe();
+  }, []);
 
 
   // Fetch lists from Firebase
@@ -646,9 +646,11 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                         <div className="bottom-controls">
                           <button
                             className="create-presentation-button"
-                            onClick={() => {
+                            onClick={async () => {
                               // Get favorite submissions for this list
                               const favsForList = submissions.filter(sub => favorites.includes(sub.id));
+                              const favIds = favsForList.map(sub => sub.id);
+                              await set(dbRef(database, `favoritesByList/${expandedList}`), favIds);
                               navigate(`/presentation/${expandedList}`, { state: { favorites: favsForList } });
                             }}
                           >
