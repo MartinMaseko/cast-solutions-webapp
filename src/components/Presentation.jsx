@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ref as dbRef, get } from "firebase/database";
 import { database } from "../firebaseConfig";
@@ -17,30 +17,34 @@ function isVideo(url) {
 
 export default function Presentation() {
   const { listName } = useParams();
-  const [favorites, setFavorites] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const [favorites, setFavorites] = useState(location.state?.favorites || []);
+  const [loading, setLoading] = useState(!location.state?.favorites);
   const [selectedDetail, setSelectedDetail] = useState(null);
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      // 1. Get all favorite IDs
-      const favSnapshot = await get(dbRef(database, "favorites"));
-      const favIds = favSnapshot.exists() ? Object.keys(favSnapshot.val()) : [];
+    // Only fetch from Firebase if not coming from navigation
+    if (!location.state?.favorites) {
+      (async () => {
+        setLoading(true);
+        // 1. Get all favorite IDs
+        const favSnapshot = await get(dbRef(database, "favorites"));
+        const favIds = favSnapshot.exists() ? Object.keys(favSnapshot.val()) : [];
 
-      // 2. Get all submissions for this list
-      const subsSnapshot = await get(dbRef(database, `lists/${listName}/submissions`));
-      const allSubs = subsSnapshot.exists() ? subsSnapshot.val() : {};
+        // 2. Get all submissions for this list
+        const subsSnapshot = await get(dbRef(database, `lists/${listName}/submissions`));
+        const allSubs = subsSnapshot.exists() ? subsSnapshot.val() : {};
 
-      // 3. Filter submissions to only those in favorites
-      const favActors = Object.entries(allSubs)
-        .filter(([id]) => favIds.includes(id))
-        .map(([id, data]) => ({ id, ...data }));
+        // 3. Filter submissions to only those in favorites
+        const favActors = Object.entries(allSubs)
+          .filter(([id]) => favIds.includes(id))
+          .map(([id, data]) => ({ id, ...data }));
 
-      setFavorites(favActors);
-      setLoading(false);
-    })();
-  }, [listName]);
+        setFavorites(favActors);
+        setLoading(false);
+      })();
+    }
+  }, [listName, location.state]);
 
   const handleViewDetail = (actor) => {
     setSelectedDetail(actor);
