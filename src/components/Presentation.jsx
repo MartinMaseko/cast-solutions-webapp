@@ -1,4 +1,4 @@
-import { useLocation, useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ref as dbRef, get } from "firebase/database";
 import { database } from "../firebaseConfig";
@@ -11,7 +11,6 @@ import spinner from './assets/spinner.gif';
 function isImage(url) {
   return /\.(jpe?g|png|gif|bmp|webp)$/i.test(url);
 }
-
 function isVideo(url) {
   return /\.(mp4|webm|ogg|mov)$/i.test(url);
 }
@@ -24,32 +23,26 @@ export default function Presentation() {
   const [selectedDetail, setSelectedDetail] = useState(null);
 
   useEffect(() => {
-    const fetchPresentation = async () => {
-      try {
-        setLoading(true);
-        
-        // Get presentation data including favorites
-        const presentationRef = dbRef(database, `presentations/${listName}`);
-        const presentationSnap = await get(presentationRef);
-        
-        if (presentationSnap.exists()) {
-          const presentationData = presentationSnap.val();
-          setFavorites(presentationData.favorites || []);
-        } else {
-          console.log("No presentation found");
-          setFavorites([]);
-        }
-      } catch (error) {
-        console.error("Error fetching presentation:", error);
-        setFavorites([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Only fetch from Firebase if we don't have favorites in location.state
+    // Only fetch if not coming from navigation
     if (!location.state?.favorites) {
-      fetchPresentation();
+      (async () => {
+        setLoading(true);
+        // 1. Get all favorite IDs
+        const favSnapshot = await get(dbRef(database, "favorites"));
+        const favIds = favSnapshot.exists() ? Object.keys(favSnapshot.val()) : [];
+
+        // 2. Get all submissions for this list
+        const subsSnapshot = await get(dbRef(database, `lists/${listName}/submissions`));
+        const allSubs = subsSnapshot.exists() ? subsSnapshot.val() : {};
+
+        // 3. Filter submissions to only those in favorites
+        const favActors = Object.entries(allSubs)
+          .filter(([id]) => favIds.includes(id))
+          .map(([id, data]) => ({ id, ...data }));
+
+        setFavorites(favActors);
+        setLoading(false);
+      })();
     }
   }, [listName, location.state]);
 
@@ -204,7 +197,7 @@ export default function Presentation() {
         >
           Share Presentation
         </button>
-    </div>
+      </div>
     </div>
   );
 }

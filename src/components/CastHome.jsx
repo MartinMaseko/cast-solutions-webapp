@@ -647,25 +647,11 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                           <button
                             className="create-presentation-button"
                             onClick={async () => {
-                              try {
-                                // Get favorite submissions for this list
-                                const favsForList = submissions.filter(sub => favorites.includes(sub.id));
-                                
-                                // Store presentation data with full actor details
-                                await set(dbRef(database, `presentations/${expandedList}`), {
-                                  favorites: favsForList, // Store full actor objects, not just IDs
-                                  createdAt: serverTimestamp(),
-                                  listName: expandedList
-                                });
-
-                                // Navigate with the same data
-                                navigate(`/presentation/${expandedList}`, { 
-                                  state: { favorites: favsForList }
-                                });
-                              } catch (error) {
-                                console.error("Error creating presentation:", error);
-                                alert("Failed to create presentation");
-                              }
+                              // Get favorite submissions for this list
+                              const favsForList = submissions.filter(sub => favorites.includes(sub.id));
+                              const favIds = favsForList.map(sub => sub.id);
+                              await set(dbRef(database, `favoritesByList/${expandedList}`), favIds);
+                              navigate(`/presentation/${expandedList}`, { state: { favorites: favsForList } });
                             }}
                           >
                             Create Presentation
