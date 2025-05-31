@@ -647,11 +647,28 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                           <button
                             className="create-presentation-button"
                             onClick={async () => {
-                              // Get favorite submissions for this list
-                              const favsForList = submissions.filter(sub => favorites.includes(sub.id));
-                              const favIds = favsForList.map(sub => sub.id);
-                              await set(dbRef(database, `favoritesByList/${expandedList}`), favIds);
-                              navigate(`/presentation/${expandedList}`, { state: { favorites: favsForList } });
+                              try {
+                                // Get all submissions that are favorites
+                                const favsForList = submissions.filter(sub => favorites.includes(sub.id));
+                                
+                                if (favsForList.length === 0) {
+                                  alert("Please select at least one favorite actor before creating a presentation.");
+                                  return;
+                                }
+
+                                // Store full presentation data including actor details
+                                await set(dbRef(database, `presentations/${expandedList}`), {
+                                  favorites: favsForList,
+                                  createdAt: serverTimestamp(),
+                                  listName: expandedList
+                                });
+
+                                // Navigate to presentation with the list name
+                                navigate(`/presentation/${expandedList}`);
+                              } catch (error) {
+                                console.error("Error creating presentation:", error);
+                                alert("Failed to create presentation. Please try again.");
+                              }
                             }}
                           >
                             Create Presentation
