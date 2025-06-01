@@ -47,8 +47,11 @@ export default function Presentation() {
       }
     };
 
-    fetchPresentation();
-  }, [listName]);
+    // Only fetch from Firebase if we don't have favorites in location.state
+    if (!location.state?.favorites) {
+      fetchPresentation();
+    }
+  }, [listName, location.state]);
 
   const handleViewDetail = (actor) => {
     setSelectedDetail(actor);
@@ -201,7 +204,7 @@ export default function Presentation() {
         >
           Share Presentation
         </button>
-      </div>
+    </div>
     </div>
   );
 }
