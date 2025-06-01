@@ -4,6 +4,17 @@ import { database } from "../firebaseConfig";
 import "./caststyle.css";
 import logo from "./assets/logo.png";
 
+/**
+ * FormPage component renders a form for casting submissions.
+ *
+ * @component
+ * @param {Object} props - Component props.
+ * @param {string[]} [props.lists=[]] - Array of available audition list names.
+ * @returns {JSX.Element} The rendered form page component.
+ *
+ * @example
+ * <FormPage lists={['Audition 1', 'Audition 2']} />
+ */
 export default function FormPage({ lists = [] }) {
   const [selectedList, setSelectedList] = useState("");
 
