@@ -26,45 +26,18 @@ export default function Presentation() {
     const fetchPresentation = async () => {
       try {
         setLoading(true);
-        
-        // First, try to get the presentation data
-        const presentationRef = dbRef(database, `presentations/${listName}`);
+
+        // Always trim listName to match Firebase key
+        const presentationRef = dbRef(database, `presentations/${listName.trim()}`);
         const presentationSnap = await get(presentationRef);
-        
+
         if (presentationSnap.exists()) {
           const presentationData = presentationSnap.val();
-          
-          // Get the favorites from presentation data
           const favoriteActors = presentationData.favorites || [];
-          
-          // If we have valid favorites data, use it
-          if (Array.isArray(favoriteActors) && favoriteActors.length > 0) {
-            setFavorites(favoriteActors);
-          } else {
-            console.log("No favorites found in presentation");
-            setFavorites([]);
-          }
+          setFavorites(Array.isArray(favoriteActors) ? favoriteActors : []);
         } else {
-          // Fallback: Try to get data from lists and favorites
-          const listsRef = dbRef(database, `lists/${listName}/submissions`);
-          const favsRef = dbRef(database, 'favorites');
-          
-          const [subsSnap, favsSnap] = await Promise.all([
-            get(listsRef),
-            get(favsRef)
-          ]);
-
-          const submissions = subsSnap.val() || {};
-          const favIds = favsSnap.val() ? Object.keys(favsSnap.val()) : [];
-
-          const favoriteActors = Object.entries(submissions)
-            .filter(([id]) => favIds.includes(id))
-            .map(([id, data]) => ({
-              id,
-              ...data
-            }));
-
-          setFavorites(favoriteActors);
+          setFavorites([]);
+          console.log("No presentation found");
         }
       } catch (error) {
         console.error("Error fetching presentation:", error);
