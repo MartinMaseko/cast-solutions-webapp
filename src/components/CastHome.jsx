@@ -63,6 +63,28 @@ const filledStarIcon = "https://img.icons8.com/material-sharp/35/c52727/filled-s
  * - getFilteredSubmissions: Returns submissions filtered by gender and favorites.
  * - getPaginatedSubmissions: Returns paginated submissions and total page count.
  */
+/**
+ * DetailsPage component for managing audition lists, actor submissions, and favorites.
+ * 
+ * This component allows users to:
+ * - Create new audition lists.
+ * - View, search, and manage actor submissions for each audition.
+ * - Allocate audition numbers to actors.
+ * - Mark/unmark submissions as favorites.
+ * - Upload images and videos for each submission.
+ * - View detailed information for each actor.
+ * - Share submission details.
+ * - Delete individual submissions or clear all submissions for a list.
+ * - Create a presentation from favorite submissions.
+ * 
+ * @component
+ * @param {Object} props
+ * @param {Function} props.clearSubmissions - Function to clear all submissions for a given audition list.
+ * @param {string[]} props.lists - Array of audition list names.
+ * @param {Function} props.addList - Function to add a new audition list.
+ * 
+ * @returns {JSX.Element} The rendered DetailsPage component.
+ */
 export default function DetailsPage({ clearSubmissions, lists, addList }) {
   const [submissions, setSubmissions] = useState([]);
   const [favorites, setFavorites] = useState([]);

@@ -19,6 +19,21 @@ import Footer from "./Footer";
  * // Usage in a route
  * <Route path="/brief/:id" element={<BriefDetails />} />
  */
+/**
+ * Displays detailed information about a specific brief, including agency, shoot details,
+ * callback, wardrobe requirements, media usage, venue, date, rate, reference images,
+ * required roles, additional notes, and the detailed brief content.
+ * 
+ * Features:
+ * - Fetches brief data from a database using the brief ID from URL params.
+ * - Shows a loading state while fetching data.
+ * - Displays a not found message if the brief does not exist.
+ * - Includes an image slider for reference images with navigation and dot indicators.
+ * - Allows users to submit an audition or share the brief link.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered brief details page.
+ */
 export default function BriefDetails() {
   const { id } = useParams();
   const [brief, setBrief] = useState(null);

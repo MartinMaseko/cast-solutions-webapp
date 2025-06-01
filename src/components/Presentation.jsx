@@ -15,6 +15,22 @@ function isVideo(url) {
   return /\.(mp4|webm|ogg|mov)$/i.test(url);
 }
 
+/**
+ * Presentation component displays a list of shortlisted actors for a given presentation list.
+ * 
+ * - Fetches presentation data from Firebase based on the `listName` route parameter.
+ * - Shows a loading spinner while fetching data.
+ * - Displays a list of favorite actors with basic info and images.
+ * - Allows viewing detailed information for each actor, including images and video if available.
+ * - Provides a share button to share or copy the presentation link.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered Presentation page.
+ * 
+ * @example
+ * // Used as a route component for displaying a presentation:
+ * <Route path="/presentation/:listName" element={<Presentation />} />
+ */
 export default function Presentation() {
   const { listName } = useParams();
   const location = useLocation();
