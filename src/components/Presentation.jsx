@@ -1,4 +1,4 @@
-import { useLocation, useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ref as dbRef, get } from "firebase/database";
 import { database } from "../firebaseConfig";
@@ -11,7 +11,6 @@ import spinner from './assets/spinner.gif';
 function isImage(url) {
   return /\.(jpe?g|png|gif|bmp|webp)$/i.test(url);
 }
-
 function isVideo(url) {
   return /\.(mp4|webm|ogg|mov)$/i.test(url);
 }
@@ -27,17 +26,18 @@ export default function Presentation() {
     const fetchPresentation = async () => {
       try {
         setLoading(true);
-        
-        // Get presentation data including favorites
-        const presentationRef = dbRef(database, `presentations/${listName}`);
+
+        // Always trim listName to match Firebase key
+        const presentationRef = dbRef(database, `presentations/${listName.trim()}`);
         const presentationSnap = await get(presentationRef);
-        
+
         if (presentationSnap.exists()) {
           const presentationData = presentationSnap.val();
-          setFavorites(presentationData.favorites || []);
+          const favoriteActors = presentationData.favorites || [];
+          setFavorites(Array.isArray(favoriteActors) ? favoriteActors : []);
         } else {
-          console.log("No presentation found");
           setFavorites([]);
+          console.log("No presentation found");
         }
       } catch (error) {
         console.error("Error fetching presentation:", error);

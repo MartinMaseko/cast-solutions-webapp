@@ -652,14 +652,14 @@ export default function DetailsPage({ clearSubmissions, lists, addList }) {
                                 const favsForList = submissions.filter(sub => favorites.includes(sub.id));
                                 
                                 // Store presentation data with full actor details
-                                await set(dbRef(database, `presentations/${expandedList}`), {
-                                  favorites: favsForList, // Store full actor objects, not just IDs
+                                await set(dbRef(database, `presentations/${expandedList.trim()}`), {
+                                  favorites: favsForList,
                                   createdAt: serverTimestamp(),
-                                  listName: expandedList
+                                  listName: expandedList.trim()
                                 });
 
                                 // Navigate with the same data
-                                navigate(`/presentation/${expandedList}`, { 
+                                navigate(`/presentation/${expandedList.trim()}`, { 
                                   state: { favorites: favsForList }
                                 });
                               } catch (error) {
